@@ -1,0 +1,49 @@
+{
+  "equivalent_forms": [
+    {
+      "p": 1,
+      "max_dof_difference": 4.440892098500626e-15
+    },
+    {
+      "p": 2,
+      "max_dof_difference": 1.6653345369377348e-13
+    }
+  ],
+  "independent_polynomial_solution": {
+    "p": 2,
+    "n": 16,
+    "max_error": 3.774758283725532e-14,
+    "source": "x**3-2*x**2+3*x"
+  },
+  "source_f_check": {
+    "f0_max": 0.0,
+    "f2_max": 0.2500000000000019,
+    "f2_exact_error": 1.942890293094024e-15
+  },
+  "conservative_without_conversion": [
+    {
+      "n": 16,
+      "L2_error": 0.12214686145169935
+    },
+    {
+      "n": 32,
+      "L2_error": 0.12214587053688807
+    },
+    {
+      "n": 64,
+      "L2_error": 0.12214580872312135
+    }
+  ],
+  "convection_dominated_limitation": {
+    "epsilon": 0.001,
+    "n": 32,
+    "p": 1,
+    "Pe": 15.625,
+    "min_nodal_value": -0.9113241666925999,
+    "max_nodal_value": 1.0,
+    "relative_residual": 1.3193706159722304e-16,
+    "boundary_error": 0.0,
+    "warning": "Mesh Peclet number 15.6 > 1: unstabilized Galerkin may oscillate",
+    "accepted_as_supported": false
+  }
+}

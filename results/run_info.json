@@ -1,0 +1,44 @@
+{
+  "formulation": "advective",
+  "equation": "-(a*u')' + b*u' + c*u = f",
+  "reaction_symbol": "c",
+  "python": "3.13.2",
+  "versions": {
+    "fealpy": "3.4.0",
+    "numpy": "2.3.4",
+    "scipy": "1.16.3",
+    "sympy": "1.14.0",
+    "matplotlib": "3.10.7"
+  },
+  "numpy": "2.3.4",
+  "cases": {
+    "poisson": {
+      "a": "1",
+      "b": "0",
+      "c": "0",
+      "exact": "x + sin(pi*x) + 1",
+      "source": "pi**2*sin(pi*x)"
+    },
+    "variable": {
+      "a": "x**2 + 1",
+      "b": "x + 1",
+      "c": "x + 2",
+      "exact": "x + sin(pi*x) + 1",
+      "source": "-2*x*(pi*cos(pi*x) + 1) + (x + 1)*(pi*cos(pi*x) + 1) + (x + 2)*(x + sin(pi*x) + 1) + pi**2*(x**2 + 1)*sin(pi*x)"
+    },
+    "reverse": {
+      "a": "x + 2",
+      "b": "1 - 2*x",
+      "c": "x**2 + 3",
+      "exact": "x + sin(pi*x) + 1",
+      "source": "(1 - 2*x)*(pi*cos(pi*x) + 1) + pi**2*(x + 2)*sin(pi*x) + (x**2 + 3)*(x + sin(pi*x) + 1) - pi*cos(pi*x) - 1"
+    },
+    "cubic": {
+      "a": "x**3 + 2",
+      "b": "x**2 - 1",
+      "c": "x + 2",
+      "exact": "x + sin(pi*x) + 1",
+      "source": "-3*x**2*(pi*cos(pi*x) + 1) + (x + 2)*(x + sin(pi*x) + 1) + (x**2 - 1)*(pi*cos(pi*x) + 1) + pi**2*(x**3 + 2)*sin(pi*x)"
+    }
+  }
+}

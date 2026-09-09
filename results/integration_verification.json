@@ -1,0 +1,46 @@
+{
+  "import_preserves_backend": true,
+  "staged_module_import": true,
+  "existing_fem_exports_unchanged": true,
+  "mesh_unchanged": true,
+  "repeated_and_interleaved_solve": true,
+  "solver_injection_isolated": true,
+  "backend_switch_rejected": true,
+  "convergence": [
+    {
+      "backend": "numpy",
+      "p": 1,
+      "L2_order": 2.000028832534618,
+      "H1_order": 0.9998794668630214,
+      "max_last_error": 0.00012397064129324666
+    },
+    {
+      "backend": "numpy",
+      "p": 2,
+      "L2_order": 2.9998659330102746,
+      "H1_order": 1.9999045295741829,
+      "max_last_error": 4.80939392384611e-07
+    },
+    {
+      "backend": "pytorch",
+      "p": 1,
+      "L2_order": 2.0000288335154264,
+      "H1_order": 0.9998794668629744,
+      "max_last_error": 0.00012397064120766094
+    },
+    {
+      "backend": "pytorch",
+      "p": 2,
+      "supported": false,
+      "reason": "IntervalMesh P2 negative-step slicing"
+    }
+  ],
+  "exclusions": [
+    "PyTorch P2",
+    "GPU",
+    "jax",
+    "cupy",
+    "model-manager registration",
+    "official upstream test suite"
+  ]
+}

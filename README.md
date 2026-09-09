@@ -1,122 +1,135 @@
-# 质量扩散对流（对流-扩散-反应）方程求解器
+# 一维变系数对流–扩散–反应（CDR）方程有限元求解器
 
-> A finite element solver for the convection–diffusion–reaction (CDR) equation with variable polynomial coefficients, built on [FEALPy](https://github.com/weihuayi/fealpy). Correctness is verified via the method of manufactured solutions (MMS) and convergence-order analysis.
+> A 1D finite element solver for the convection–diffusion–reaction (CDR) equation with variable polynomial coefficients, built on [FEALPy](https://github.com/weihuayi/fealpy). Correctness is verified via the method of manufactured solutions (MMS) and convergence-order analysis.
 >
-> 基于 FEALPy 的变系数对流-扩散-反应方程有限元求解器，含制造解正确性验证、收敛阶分析与可视化展示。
+> 基于 FEALPy 的一维变系数对流–扩散–反应方程有限元求解器：程序、设计方案、数值算例、数值正确性验证与可视化，完整可复现。
 
-## 项目简介
+## 方程与项目简介
 
-本项目求解一类「质量扩散对流」方程——即对流-扩散-反应方程（Convection–Diffusion–Reaction, CDR）。一维形式为
+本项目求解「质量扩散对流」方程——即对流-扩散-反应方程（Convection–Diffusion–Reaction, CDR）。一维稳态形式为
 
 $$-(a(x)u')' + b(x)u' + c(x)u = f(x), \qquad x\in(0,1), \qquad u(0)=u_0,\ u(1)=u_1$$
-
-二维推广：
-
-$$-\nabla\cdot\big(a(\boldsymbol x)\nabla u\big) + \boldsymbol b(\boldsymbol x)\cdot\nabla u + c(\boldsymbol x)u = f(\boldsymbol x), \qquad \boldsymbol x\in\Omega\subset\mathbb{R}^2$$
-
-方程左边三项的系数不再是常数 1，而是任意给定的**多项式函数**：
 
 | 项 | 形式 | 物理含义 | 系数条件 |
 |---|---|---|---|
 | 扩散项 | $-(a(x)u')'$ | 扩散（热量、污染物向四周散开） | $a(x)>0$（椭圆性） |
 | 对流项 | $b(x)u'$ | 对流（流场把物质往下游搬运） | 任意多项式 |
-| 反应/质量项 | $c(x)u$ | 反应或质量变化（衰减、吸收） | $c(x)\ge 0$（适定性） |
+| 反应项 | $c(x)u$ | 反应或质量变化（衰减、吸收） | $c(x)\ge 0$ |
 
-取 $a=1,\ b=0,\ c=0$ 时方程退化回 Poisson 方程 $-\Delta u=f$——因此本项目是 Poisson 方程有限元求解器的自然推广，可视为「一般二阶椭圆型方程」的教学型通用求解器。
+要点：
 
-## 项目亮点
-
-- **变系数通用求解**：三个系数均可取任意多项式，扩散/对流/反应三项可自由组合（含退化回 Poisson 的对照算例）
-- **完整的数值正确性验证管线**：制造解（MMS）反推右端项 → 求解 → 误差表 → **收敛阶与理论阶比对**（P1 元期望 L2 阶 2 / H1 阶 1，P2 元期望 3 / 2）
-- **符号推导自动化**：右端项 $f$ 由 SymPy 自动推导，杜绝手算错误
-- **一维 + 二维双支持**：一维完成快速验证与手算对照，二维做展示算例
-- **全流程工程化**：任务分析 → 调研报告 → 设计方案 → 实现 → 验证 → 可视化，文档齐备
-
-## 技术栈
-
-| 组件 | 用途 |
-|---|---|
-| Python 3.13 | 开发语言 |
-| [FEALPy](https://github.com/weihuayi/fealpy) v3.4 | 有限元框架（网格、函数空间、积分器、边界条件） |
-| SciPy | 稀疏线性方程组求解（`spsolve`） |
-| SymPy | 制造解右端项与边界值的符号推导 |
-| Matplotlib | 解、误差与收敛阶可视化 |
+- 三个系数 a、b、c 均可取**任意多项式**（含常数），右端源项 **f 是独立的必需输入**，可以是任意函数（含 f=0 的齐次情形）；
+- 展开后是 $-(au')'=-au''-a'u'$，扩散系数变化时 $-a'u'$ 项不可遗漏；
+- 取 $a=1,\ b=0,\ c=0$ 时方程退化回 Poisson 方程 $-\Delta u=f$——本求解器是常系数 Poisson 有限元求解器的自然推广。
 
 ## 数值方法
 
-Galerkin 有限元离散：方程两边乘检验函数 $v\in H_0^1$ 并分部积分，得弱形式
+取零端点检验函数 v，仅对扩散项分部积分得弱形式
 
-$$\int_\Omega\Big(a\,\nabla u\cdot\nabla v + (\boldsymbol b\cdot\nabla u)\,v + c\,uv\Big)\,dx = \int_\Omega f\,v\,dx$$
+$$\int_0^1 a u'v' + \int_0^1 b u'v + \int_0^1 c uv = \int_0^1 f v.$$
 
-离散后总矩阵为三块之和 $\mathbf A = \mathbf K + \mathbf B + \mathbf M$：
+离散后总矩阵为三块之和 $\mathbf A=\mathbf K+\mathbf B+\mathbf M_c$、右端 $\mathbf F$ 来自 f：
 
-- 扩散项 → 对称刚度矩阵 $\mathbf K$；
-- 对流项 → **非对称**矩阵 $\mathbf B$（与 Poisson 的关键差异）；
-- 反应项 → 对称质量矩阵 $\mathbf M$。
+- 扩散项 → 刚度矩阵 $\mathbf K$（对称）
+- 对流项 → 矩阵 $\mathbf B$（**非对称**，与 Poisson 求解器的关键差异）
+- 反应项 → 质量矩阵 $\mathbf M_c$（对称）
 
-采用 Lagrange 元（P1/P2），系数在积分点局部求值组装（`process_coef_func`），Dirichlet 边界条件按行修正，稀疏直接法求解。
+实现采用连续 Lagrange 元（P1/P2），用 FEALPy 积分器组装：`ScalarDiffusionIntegrator(coef=a)`、`ScalarConvectionIntegrator(coef=b)`、`ScalarMassIntegrator(coef=c)`、`ScalarSourceIntegrator(f)`，系数在积分点求值；端点 Dirichlet 用 `DirichletBC` 修正矩阵与右端（非零边界贡献移到右端）；稀疏线性方程组经 FEALPy `spsolve(..., solver='scipy')` 求解。
 
-**验证方法学**：给定精确解 $u_{ex}$（取非多项式，如三角函数），由方程反算 $f=-(au_{ex}')'+bu_{ex}'+cu_{ex}$ 与边界值，再解数值方程比对；网格逐级加密（$h\to h/2$）计算收敛阶 $\log_2(e_h/e_{h/2})$，实测阶逼近理论阶即判定实现正确。
+## 验证方法学（MMS + 收敛阶）
 
-## 项目结构（目标结构，代码开发中）
+制造解验证管线：给定精确解 $u_*=1+x+\sin(\pi x)$ → SymPy 反推源项 $f=-(au_*')'+bu_*'+cu_*$ → FEALPy 求解 → `mesh.error` 计算 L2/H1 误差 → 网格逐级加密计算经验收敛阶 $\log_2(e_h/e_{h/2})$ → 与理论阶比对（P1 期望 L2≈2/H1≈1，P2 期望 ≈3/≈2）。
+
+四组系数算例：`poisson`（退化对照）、`variable`、`reverse`、`cubic`；每组 P1/P2 × n=8/16/32/64，共 **32 组全部通过**，且另有手算单元矩阵对照、f 作用验证、两形式转换等价性、强对流限制案例检出等独立检查。最细网格 n=64 实测摘要：
+
+| 算例 | p | L2 误差 | L2 阶 | H1 阶 |
+| --- | --- | --- | --- | --- |
+| poisson | 1 | 1.555290e-04 | 2.00 | 1.00 |
+| poisson | 2 | 4.809369e-07 | 3.00 | 2.00 |
+| variable | 1 | 1.239706e-04 | 2.00 | 1.00 |
+| variable | 2 | 4.809394e-07 | 3.00 | 2.00 |
+
+完整 32 组数据见[任务报告](./一维求解器_任务报告.md)与 `results/convergence.csv`。
+
+## 项目结构
 
 ```
 .
-├── README.md                # 项目说明（本文件）
-├── docs/                    # 文档
-│   ├── 任务了解.md           # 任务解读：方程背景、交付物、待确认问题
-│   ├── 调研报告.md           # 同类求解器调研 + FEALPy 可行性核查 + 风险清单
-│   └── 设计方案.md           # 弱形式推导、离散、组装、验证方案（待写）
-├── src/                     # 求解器实现（待写）
-│   └── cdr_solver.py        # CDR 求解器类：输入 a,b,c,f + 网格 + 元次数，输出解与误差
-├── examples/                # 数值算例（待写）
-│   ├── example1_polynomial_coefs.py
-│   ├── example2_2d.py
-│   └── example0_poisson_degenerate.py   # 退化 Poisson 对照
-├── verification/            # 正确性验证（待写）
-│   ├── manufactured_solution.py         # SymPy 推导 f 与边界值
-│   └── convergence.py       # 收敛阶计算与 log-log 图
-└── figures/                 # 解、误差、收敛阶图片输出
+├── 一维求解器_入门说明.md         # 入门阅读：方程与符号 → 手算例子 → 代码逐段拆解
+├── 一维求解器_任务报告.md         # 设计方案、完整程序、32 组实测表、验证方法与图片
+├── 质量扩散对流求解器_任务了解.md # 早期任务分析（方程背景、交付物、待确认清单）
+├── 质量扩散对流求解器_调研报告.md # 同类软件调研 + FEALPy 可行性核查
+├── cdr_lfem_solver_1d.py      # 核心类 CdrLFEMSolver1D：linear_system / apply_bc / solve
+├── cdr_solver.py              # 示例层：主接口 solve_cdr + 制造解 + run()（32 组验证与绘图）
+├── example_source.py          # 最小示例：解 -u''=2，f 显式给出
+├── verify_integrators.py      # 单元矩阵与手算值对照 + 边界自由度检查
+├── verify_formulation.py      # f 作用、多项式精确解、形式转换、强对流限制案例
+├── verify_integration.py      # 后端兼容与可集成性检查（NumPy/PyTorch，需自行装 PyTorch）
+├── check_environment.py       # 依赖版本核对（与 requirements.txt 比对）
+├── run.cmd                    # 一键复跑：环境检查 + 32 组验证 + 独立检查
+├── requirements.txt / .gitignore
+└── results/                   # 验证输出：convergence.csv、verification.png 等
 ```
 
 ## 快速开始
 
-> 代码开发中，完成后本节将提供可直接复现的命令。
-
-预计使用方式（示意）：
-
-```python
-from cdr_solver import CdrSolver
-
-# 系数：a(x)=1+x^2, b(x)=x, c(x)=1+x
-solver = CdrSolver(a=lambda x: 1 + x**2, b=lambda x: x,
-                   c=lambda x: 1 + x, p=1)
-uh = solver.solve(f, gd, nx=40)          # FEALPy 组装 + DirichletBC + spsolve
-l2, h1 = solver.compute_errors(u_exact)  # mesh.error
+```powershell
+python -m venv .venv
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+.\run.cmd
 ```
 
-## 开发进度
+`run.cmd` 依次执行环境检查、32 组收敛验证（输出 `results/convergence.csv` 与 `results/verification.png`）、单元矩阵对照与独立方程检查。
 
-- [x] 任务了解文档：方程背景、交付物清单、技术路线
-- [x] 调研报告：同类求解器横向对比（FiPy / deal.II / FreeFEM / OpenFOAM / scikit-fem 等）+ FEALPy 源码级可行性核查
-- [ ] 设计方案文档
-- [ ] 一维求解器主体 + 制造解验证管线
-- [ ] 收敛阶验证（P1/P2，L2/H1）
-- [ ] 二维推广算例
-- [ ] 可视化与文档整合
+最小示例（`example_source.py`，解 $-\ u''=2$、零端点）：
 
-## 项目背景
+```python
+from cdr_solver import solve_cdr, expression_function as fun
 
-本项目源于算海暑期培训（2026 夏）的课程任务，是前期 Poisson 方程有限元工作（[用 FEALPy 实现的 Poisson 方程算例](https://github.com/weihuayi/fealpy)）的推广：将常系数 Poisson 方程推广为变系数对流-扩散-反应方程的一般求解器，并按要求交付程序、设计方案、数值算例、数值正确性验证与可视化。
+mesh, space, uh, residual, boundary_error = solve_cdr(
+    a=fun(1), b=fun(0, vector=True), c=fun(0),
+    f=fun(2), gd=fun(0), n=16, p=2)
+print('Maximum solution value:', max(uh[:]))
+```
+
+主接口 `solve_cdr(a, b, c, f, gd, n=32, p=1)`：a、b、c、f、gd 可为常数或 Cartesian 可调用函数（SymPy 表达式用 `expression_function` 包装；一维下 b 需返回形状 `(..., 1)`，即 `vector=True`）。返回网格、函数空间、数值解 uh 及残差指标。
+
+可复用核心（适合集成到其他 FEALPy 程序）：
+
+```python
+from fealpy.mesh import IntervalMesh
+from fealpy.functionspace import LagrangeFESpace
+from cdr_lfem_solver_1d import CdrLFEMSolver1D
+
+mesh = IntervalMesh.from_interval_domain([0, 1], nx=32)
+space = LagrangeFESpace(mesh, p=1)
+model = CdrLFEMSolver1D(space, a, b, c, f, gd)   # a/b/c/f/gd 为常数或可调用
+uh = model.solve()
+```
+
+## 已知边界与范围
+
+- **已实现并验证**：一维稳态、全 Dirichlet、连续 P1/P2、系数光滑且扩散正定的问题；NumPy CPU 全支持，PyTorch CPU 支持 P1（P2 受当前 IntervalMesh 插值点接口限制，显式拒绝）。
+- **尚未实现**：二维、时间项、混合边界、稳定化（如 SUPG）、逐单元守恒重构与严格非负性保证。
+- **已知局限**：无稳定化 Galerkin 在强对流下会出现伪振荡。程序对网格 Peclet 数 $\mathrm{Pe}=\frac{|b|h}{2a}>1$ 给出警告；`results/form_verification.json` 记录了一个 a=0.001、b=1、Pe≈15.6 的案例出现非物理负值，`accepted_as_supported=false`——该案例被程序正确检出，不作为支持工况。
+
+## 复现环境（2026-09-07 实测）
+
+| 组件 | 版本 |
+| --- | --- |
+| Python | 3.13.2 |
+| fealpy | 3.4.0 |
+| numpy | 2.3.4 |
+| scipy | 1.16.3 |
+| sympy | 1.14.0 |
+| matplotlib | 3.10.7 |
+
+另以本地更新的 FEALPy 开发源码复跑全部检查通过（详见[任务报告](./一维求解器_任务报告.md)）。
 
 ## 参考资料
 
 - [FEALPy: Finite Element Analysis Library in Python](https://github.com/weihuayi/fealpy)
+- Roache, *Code Verification by the Method of Manufactured Solutions*, ASME J. Fluids Eng. 2002（MMS 方法论）
 - deal.II 教程 step-6 / step-26（变系数组装与时间步进的标准做法）
 - FiPy（扩散/对流/反应项自由组合的接口设计参考）
-- Roache, *Code Verification by the Method of Manufactured Solutions*, ASME J. Fluids Eng. 2002（MMS 方法论）
-- 详细调研见 `docs/调研报告.md`
-
-## 作者
-
-祁靖（作者简介与联系方式）
+- 详细调研见[质量扩散对流求解器_调研报告.md](./质量扩散对流求解器_调研报告.md)
