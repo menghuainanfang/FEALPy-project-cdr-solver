@@ -49,27 +49,32 @@ $$\int_0^1 a u'v' + \int_0^1 b u'v + \int_0^1 c uv = \int_0^1 f v.$$
 | variable | 1 | 1.239706e-04 | 2.00 | 1.00 |
 | variable | 2 | 4.809394e-07 | 3.00 | 2.00 |
 
-完整 32 组数据见[任务报告](./一维求解器_任务报告.md)与 `results/convergence.csv`。
+完整 32 组数据见[docs/一维求解器_任务报告.md](./docs/一维求解器_任务报告.md)与 `results/convergence.csv`。
 
 ## 项目结构
 
 ```
 .
-├── 一维求解器_入门说明.md         # 入门阅读：方程与符号 → 手算例子 → 代码逐段拆解
-├── 一维求解器_任务报告.md         # 设计方案、完整程序、32 组实测表、验证方法与图片
-├── 质量扩散对流求解器_任务了解.md # 早期任务分析（方程背景、交付物、待确认清单）
-├── 质量扩散对流求解器_调研报告.md # 同类软件调研 + FEALPy 可行性核查
-├── cdr_lfem_solver_1d.py      # 核心类 CdrLFEMSolver1D：linear_system / apply_bc / solve
+├── README.md
+├── run.cmd                    # 一键复跑：环境检查 + 32 组验证 + 独立检查
+├── requirements.txt           # 依赖版本锁定（fealpy/numpy/scipy/sympy/matplotlib）
+├── .gitignore
+├── docs/                      # 项目文档
+│   ├── 一维求解器_入门说明.md   # 入门阅读：方程与符号 → 手算例子 → 代码逐段拆解
+│   ├── 一维求解器_任务报告.md   # 设计方案、完整程序、32 组实测表、验证方法与图片
+│   ├── 质量扩散对流求解器_任务了解.md  # 早期任务分析（方程背景、交付物、待确认清单）
+│   └── 质量扩散对流求解器_调研报告.md  # 同类软件调研 + FEALPy 可行性核查
 ├── cdr_solver.py              # 示例层：主接口 solve_cdr + 制造解 + run()（32 组验证与绘图）
+├── cdr_lfem_solver_1d.py      # 核心类 CdrLFEMSolver1D：linear_system / apply_bc / solve
 ├── example_source.py          # 最小示例：解 -u''=2，f 显式给出
 ├── verify_integrators.py      # 单元矩阵与手算值对照 + 边界自由度检查
 ├── verify_formulation.py      # f 作用、多项式精确解、形式转换、强对流限制案例
 ├── verify_integration.py      # 后端兼容与可集成性检查（NumPy/PyTorch，需自行装 PyTorch）
 ├── check_environment.py       # 依赖版本核对（与 requirements.txt 比对）
-├── run.cmd                    # 一键复跑：环境检查 + 32 组验证 + 独立检查
-├── requirements.txt / .gitignore
-└── results/                   # 验证输出：convergence.csv、verification.png 等
+└── results/                   # 验证输出：convergence.csv、verification.png、JSON 等
 ```
+
+说明：`.py` 脚本之间通过同目录模块导入互相依赖（如 `verify_*.py` 导入 `cdr_solver`），因此代码保持扁平置于根目录；文档统一归入 `docs/`，输出数据与图片在 `results/`。`docs/一维求解器_任务报告.md` 附录内嵌全部源码全文，与根目录文件一一对应。
 
 ## 快速开始
 
@@ -124,7 +129,7 @@ uh = model.solve()
 | sympy | 1.14.0 |
 | matplotlib | 3.10.7 |
 
-另以本地更新的 FEALPy 开发源码复跑全部检查通过（详见[任务报告](./一维求解器_任务报告.md)）。
+另以本地更新的 FEALPy 开发源码复跑全部检查通过（详见[docs/一维求解器_任务报告.md](./docs/一维求解器_任务报告.md)）。
 
 ## 参考资料
 
@@ -132,4 +137,4 @@ uh = model.solve()
 - Roache, *Code Verification by the Method of Manufactured Solutions*, ASME J. Fluids Eng. 2002（MMS 方法论）
 - deal.II 教程 step-6 / step-26（变系数组装与时间步进的标准做法）
 - FiPy（扩散/对流/反应项自由组合的接口设计参考）
-- 详细调研见[质量扩散对流求解器_调研报告.md](./质量扩散对流求解器_调研报告.md)
+- 详细调研见[docs/质量扩散对流求解器_调研报告.md](./docs/质量扩散对流求解器_调研报告.md)
