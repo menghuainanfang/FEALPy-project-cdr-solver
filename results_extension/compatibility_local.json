@@ -1,0 +1,50 @@
+{
+  "fealpy_path": "C:\\Users\\10251\\fealpy\\fealpy\\__init__.py",
+  "imports_preserve_backend": true,
+  "imports_preserve_sys_path": true,
+  "fem_exports_unchanged": true,
+  "mesh_and_existing_data_unchanged": true,
+  "repeated_interleaved_solves": true,
+  "modifying_callback_isolated": true,
+  "backend_change_rejected": true,
+  "symbolic_assumptions_supported": true,
+  "vtk_values_checked": true,
+  "records": [
+    {
+      "dim": 1,
+      "p": 1,
+      "L2": 0.02144479115181995,
+      "max_residual": 4.255960244062786e-17
+    },
+    {
+      "dim": 1,
+      "p": 2,
+      "L2": 2.6939411381555994e-16,
+      "max_residual": 1.3434872322943768e-16
+    },
+    {
+      "dim": 2,
+      "p": 1,
+      "L2": 0.04162640546780839,
+      "max_residual": 1.9049402878984836e-17
+    },
+    {
+      "dim": 2,
+      "p": 2,
+      "L2": 2.519061023249906e-15,
+      "max_residual": 4.7663685822584077e-17
+    },
+    {
+      "dim": 3,
+      "p": 1,
+      "L2": 0.06204682699318377,
+      "max_residual": 8.946536302124216e-18
+    },
+    {
+      "dim": 3,
+      "p": 2,
+      "L2": 4.607618125655519e-15,
+      "max_residual": 1.173814969515273e-17
+    }
+  ]
+}
