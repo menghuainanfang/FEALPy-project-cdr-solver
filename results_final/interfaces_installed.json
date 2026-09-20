@@ -1,0 +1,45 @@
+{
+  "fealpy_path": "C:\\Users\\10251\\AppData\\Local\\Programs\\Python\\Python313\\Lib\\site-packages\\fealpy\\__init__.py",
+  "records": [
+    {
+      "dim": 1,
+      "p": 1,
+      "L2": 0.04420134792159441
+    },
+    {
+      "dim": 1,
+      "p": 2,
+      "L2": 8.407670488140684e-16
+    },
+    {
+      "dim": 2,
+      "p": 1,
+      "L2": 0.0927861409278146
+    },
+    {
+      "dim": 2,
+      "p": 2,
+      "L2": 1.0142543042130808e-14
+    },
+    {
+      "dim": 3,
+      "p": 1,
+      "L2": 0.1414328411516773
+    },
+    {
+      "dim": 3,
+      "p": 2,
+      "L2": 3.4657281315446937e-15
+    }
+  ],
+  "import_isolation": true,
+  "mesh_isolation": true,
+  "repeated_interleaved": true,
+  "callback_isolation": true,
+  "backend_guard": true,
+  "four_component_export": true,
+  "no_exact_solution": true,
+  "strong_transient_consistency": true,
+  "capacity_semantics": true,
+  "nonunit_boxes": true
+}

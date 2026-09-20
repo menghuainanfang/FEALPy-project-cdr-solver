@@ -1,52 +1,22 @@
-# FEALPy CDR 多维含时有限元求解器
+# FEALPy 多维向量含时 CDR 求解器
 
-基于 [FEALPy](https://github.com/weihuayi/fealpy) 的对流–扩散–反应（Convection–Diffusion–Reaction, CDR）求解器，支持 **1、2、3 维稳态与含时问题、连续 P1/P2 有限元、变系数和非零 Dirichlet 边界**。项目包含可运行程序、数值算例、独立正确性验证、收敛数据和 ParaView 时间序列。
+用有限元求解 **1、2、3 维、多个耦合分量、时变系数**的对流–扩散–反应方程。支持 **P1/P2、后向欧拉、二阶 BDF2、SUPG 强对流稳定化、VTU/PVD 时间序列**，附可复现数值验证、图片、任务报告和两份完整学习讲义。
 
-![二维初值、终态数值解与顶点误差](results_extension/field.png)
+![两个耦合分量的初值、终态与顶点误差](results_final/field.png)
 
-上图展示二维解从初始状态到 $t=1$ 的演化，以及终态顶点误差。两幅解图的色标范围分别标注，精确峰值从 1 降到约 0.368。
-
-## 方程与数值方法
-
-在盒形区域 $\Omega\subset\mathbb R^m$ 上求解
+## 方程
 
 $$
-d(\boldsymbol x,t)\frac{\partial u}{\partial t}
--\nabla\cdot(a(\boldsymbol x,t)\nabla u)
-+\boldsymbol b(\boldsymbol x,t)\cdot\nabla u
-+c(\boldsymbol x,t)u=f(\boldsymbol x,t).
+d(\boldsymbol x,t)\partial_tu_i-\nabla\cdot(a(\boldsymbol x,t)\nabla u_i)
++\boldsymbol b(\boldsymbol x,t)\cdot\nabla u_i
++\sum_{j=1}^m C_{ij}(\boldsymbol x,t)u_j=f_i,\quad i=1,\ldots,m.
 $$
 
-| 数据 | 含义 | 表达形式 |
-| --- | --- | --- |
-| $a$ | 标量扩散系数 | 正常数或变系数 |
-| $\boldsymbol b$ | 对流速度 | m 个标量分量 |
-| $c$ | 反应系数 | 标量 |
-| $d$ | 时间容量系数 | 正常数或变系数 |
-| $f$ | 源项 | 显式输入或由制造解生成 |
-| $g$、$u_0$ | 全边界 Dirichlet 数据、初值 | 空间/时间表达式、空间表达式 |
+空间维数 D 与未知量分量数 m 独立。a、d 为各分量共享的正标量，b 是公共空间速度，C 是反应耦合矩阵；非对角元允许分量间耦合。系数均可依赖空间和时间。时间项为 $d u_t$。边界采用全 Dirichlet 条件，含时问题另给初值。
 
-时间项定义为 $d\,u_t$；若使用 $\partial_t(du)$，时间变化的 d 会引入额外项，需另行建模。系数支持数字、字符串和 SymPy 表达式，包括多项式与三角函数。空间坐标命名为 `x0`、`x1`、`x2`，时间为 `t`。
+## 快速运行
 
-空间弱形式为
-
-$$
-\int_\Omega d u_t v+\int_\Omega a\nabla u\cdot\nabla v
-+\int_\Omega(\boldsymbol b\cdot\nabla u)v+\int_\Omega cuv=\int_\Omega fv.
-$$
-
-FEALPy 的扩散、对流、质量和源项积分器完成组装，`DirichletBC` 处理边界，`spsolve(..., solver='scipy')` 求解一般非对称的稀疏系统。时间采用一阶后向欧拉：
-
-$$
-(M_d^{n+1}+\Delta t A^{n+1})U^{n+1}
-=M_d^{n+1}U^n+\Delta t F^{n+1}.
-$$
-
-稳态调用 `solve()`，省略时间项；含时调用 `solve_time()`。
-
-## 快速开始
-
-实测环境：Python 3.13.2、FEALPy 3.4.0、NumPy 2.3.4、SciPy 1.16.3、SymPy 1.14.0、Matplotlib 3.10.7、VTK 9.6.2。
+实测 Python 3.13.2、FEALPy 3.4.0、NumPy 2.3.4、SciPy 1.16.3、SymPy 1.14.0、Matplotlib 3.10.7、VTK 9.6.2。建议使用独立虚拟环境。
 
 ```bash
 git clone https://github.com/menghuainanfang/FEALPy-project-cdr-solver.git
@@ -54,136 +24,94 @@ cd FEALPy-project-cdr-solver
 python -m venv .venv
 ```
 
-激活虚拟环境：Windows PowerShell 使用 `.\.venv\Scripts\Activate.ps1`，Linux/macOS 使用 `source .venv/bin/activate`。然后运行：
+Windows PowerShell 激活：`.\.venv\Scripts\Activate.ps1`；Linux/macOS：`source .venv/bin/activate`。
 
 ```bash
 python -m pip install -r requirements_extension.txt
-python example_extension.py
-python verify_extension.py
+python example_vector.py --dim 2 --n 12 --p 2 --steps 20
 ```
 
-`example_extension.py` 运行不依赖精确解的二维含时问题。`verify_extension.py` 运行完整扩展验证，生成 CSV、JSON、三张图片、21 个时刻的 VTU/PVD 和 [任务报告](docs/多维含时求解器_任务报告.md)。仓库已附一套实测结果，可直接浏览。
+结果写入 `output/vector/`。在 ParaView 中打开 `solution.pvd`，点击 Apply，选择 `u_0` 或 `u_1`，播放时间序列。仓库已有 [21 帧结果](results_final/vtu/solution.pvd)，详见 [ParaView 指南](docs/向量含时结果_ParaView指南.md)。
 
 ## 定义自己的问题
 
 ```python
 from fealpy.backend import backend_manager as bm
-from fealpy.functionspace import LagrangeFESpace
-from pde import CDRData
-from cdr_lfem_solver import CDRLFEMSolver, box_mesh
+from cdr import CDRSolver, SymbolicCDR, box_mesh
 
 bm.set_backend('numpy')
-pde = CDRData(
-    dim=2,
-    a='1+x0**2+x1**2',
-    b=['1+x0', '1+x1'],
-    c=2,
-    d='1+x0+x1',
-    source=1,
-    boundary=0,
-    initial=0,
+pde = SymbolicCDR(
+    2, components=2,
+    a='0.01*(1+t)', b=['1+t', '0.2'], d='1+t',
+    reaction=[[2, -1], [-1, 2]],
+    source=[1, 0], boundary=[0, 0], initial=[0, 0],
 )
-space = LagrangeFESpace(box_mesh(pde, n=8), p=1)
-solver = CDRLFEMSolver(space, pde)
-uh = solver.solve_time(end_time=0.2, steps=4, output='my_results')
+solver = CDRSolver(pde, box_mesh(pde, 12), p=1, stabilization='supg')
+solver.solve_time(0.2, 20, scheme='bdf2', output='output/my_case')
 print(solver.history[-1])
 ```
 
-默认区域为单位盒；例如 `box=[0,2,0,1]` 表示二维矩形。`n` 是每个坐标方向的分段数，`p` 为 1 或 2。改变维数时同时修改 b 的分量数和表达式中的坐标。
+符号坐标为 `x,y,z,t`。也可继承 `CDRModel`，按 FEALPy 风格直接编写 `source(p,t)` 等方法，使用 `x=p[...,0]` 提取坐标；完整例子见 [cdr/cases.py](cdr/cases.py)。`exact=[...]` 可由制造解自动生成源项、边界和初值；未知精确解时直接输入实际数据。`solve_steady(t=...)` 求指定系数时刻的稳态问题。
 
-制造解实验可用 `CDRData(2, exact='sin(pi*x0)*sin(pi*x1)')` 自动生成源项、边界和精确梯度。实际题目直接提供 `source`、`boundary`、`initial`，无需知道精确解。
+## 数值证据
 
-## 数值算例与正确性验证
+- 36 组空间加密实验覆盖 1—3 维、Galerkin/SUPG、P1/P2。平滑问题中 P1 趋近 $L^2$ 二阶、梯度误差一阶；P2 趋近三阶和二阶。
+- 24 组时间加密实验用空间可精确表示的二次解分离时间误差。BDF2 最后一级观测阶约 **1.99—2.00**，后向欧拉约 **1.00**。
+- 一至三维二次空间、一次时间的耦合解再现，检查完整 SUPG 残差；另用独立符号微分核对手工源项。
+- 固定 f 删除反应非对角元，解发生变化；VTK 读回与 FE 顶点值一致。无精确解输入、四分量导出和接口隔离均有验证。
 
-### 空间收敛：24 组多维实验
+![空间收敛](results_final/spatial.png)
 
-取 $u=1+\sum_i x_i+\prod_i\sin(\pi x_i)$，$a=1+\sum_i x_i^2$，$b_i=1+x_i$，$c=2+\sum_i x_i$。由强形式生成源项，边界取精确解。每个维数、每种阶次采用四层网格。
+![时间收敛](results_final/temporal.png)
 
-| 维数 | 阶次 | 每方向分段 n | 自由度 | L2 误差 | H1 半范误差 | L2 阶 | H1 阶 |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| 1 | P1 | 64 | 65 | 1.23971e-4 | 3.14776e-2 | 2.000 | 1.000 |
-| 1 | P2 | 64 | 129 | 4.80939e-7 | 1.99480e-4 | 3.000 | 2.000 |
-| 2 | P1 | 32 | 1089 | 1.23907e-3 | 1.08988e-1 | 1.995 | 0.998 |
-| 2 | P2 | 32 | 4225 | 8.59825e-6 | 2.10970e-3 | 2.997 | 1.997 |
-| 3 | P1 | 16 | 4913 | 6.05981e-3 | 2.42902e-1 | 1.960 | 0.983 |
-| 3 | P2 | 16 | 35937 | 8.76602e-5 | 1.14790e-2 | 2.999 | 1.972 |
+强对流边界层取 $\varepsilon=0.001$、速度沿 x 轴、精确值范围 $[0,1]$。节点上下界如下，未做数值截断：
 
-![空间收敛曲线](results_extension/spatial.png)
-
-光滑算例预期的 L2/H1 半范收敛阶为 P1：2/1，P2：3/2。[完整空间数据](results_extension/spatial.csv)。
-
-### 时间收敛：12 组实验
-
-取 $w=1+\sum_i x_i^2$、$u=e^t w$、$d=1+t+\sum_i x_i$，使用上述 a/b/c。固定 n=4、P2，空间可表示 w，以分离时间误差；终止时间为 0.5，时间步数为 5/10/20/40。
-
-| 维数 | 最细时间步 | L2 误差 | 时间收敛阶 |
+| 维数 / 每方向分段 | Galerkin 最小值 | Galerkin 最大值 | SUPG 节点范围 |
 | --- | --- | --- | --- |
-| 1 | 0.0125 | 1.25851e-3 | 0.993 |
-| 2 | 0.0125 | 8.49827e-4 | 0.995 |
-| 3 | 0.0125 | 6.60127e-4 | 0.995 |
+| 1D / 32 | −0.9113 | 1.0000 | [0,1]，舍入误差内 |
+| 2D / 32 | −1.2402 | 1.2646 | [0,1]，舍入误差内 |
+| 3D / 8 | −7.1244 | 2.8119 | [0,1]，舍入误差内 |
 
-![时间收敛曲线](results_extension/temporal.png)
+![强对流振荡与出口边界层放大](results_final/layer.png)
 
-结果符合后向欧拉一阶预期。[完整时间数据](results_extension/temporal.csv)。
+SUPG 在这些算例中抑制了振荡。右图同时显示：粗网格上的线性函数还不能精确表示很薄的边界层。稳定性和解析精度需要分别判断。完整数值、参数和解释见 [任务报告](docs/向量含时CDR_任务报告.md)。
 
-### 独立检查
+## 复现与兼容性
 
-- 手写源项的 $u=(1+t)(1+\sum_i x_i^2)$ 算例同时检验变系数容量、非零时变边界和空间算子，1/2/3 维 L2 误差约为 $10^{-15}$。
-- 固定 f，仅将 d 从 1 改为 2，终态自由度最大差约为 0.01810，确认容量系数参与计算。
-- 一维稳态新旧接口自由度结果一致。
-- 检查施加边界后的相对代数残差小于 $10^{-10}$、边界误差小于 $10^{-11}$。
-- VTU 由 VTK 读取器读回；兼容性检查覆盖 1/2/3 维 P1/P2 顶点数值、已有网格数据保留、重复与交替求解。
+```bash
+python verify_vector.py
+python build_final_report.py
+```
 
-详见 [verification.json](results_extension/verification.json) 和 [兼容性说明](docs/兼容性说明.md)。兼容性脚本检查导入时保持 PyTorch 后端，因此另外需要安装 PyTorch；这不代表扩展求解器支持 PyTorch 运算：
+第一条计算并保存 CSV、JSON 和 VTU，第二条重绘图片并更新报告。三维 P2 使用稀疏直接法，完整验证比小示例耗时更长。
+
+接口隔离脚本额外用 PyTorch 模拟其他调用者的后端选择；正常求解不需要它：
 
 ```bash
 python -m pip install torch
-python verify_compatibility.py results_extension/compatibility_installed.json
+python verify_vector_interfaces.py
 ```
 
-## ParaView 可视化
+测试通过 FEALPy 3.4.0 安装版及本机源码检出 `v3.4.1-47-ge033533bd-dirty`。未修改 FEALPy；导入不改变全局后端或 sys.path；导出不改调用者的网格节点数据。证据见 [安装版接口记录](results_final/interfaces_installed.json)和[源码版接口记录](results_final/interfaces_source.json)。
 
-1. 从 [ParaView 官网](https://www.paraview.org/download/) 安装桌面程序。
-2. File → Open，打开 [solution.pvd](results_extension/vtu/solution.pvd)，点击 Apply。
-3. 颜色字段选择 `u`，显示方式选择 Surface，播放时间序列。
-4. 固定颜色范围为 [0,1] 可直观看到振幅衰减；通过 Save Screenshot / Save Animation 导出图片或动画。
+## 文件导航
 
-PVD 记录 0 到 1 的实际物理时间，间隔 0.05；21 个 VTU 文件保存每个时刻的网格与顶点数据。详见 [ParaView 入门](docs/ParaView入门.md)。
+| 位置 | 内容 |
+| --- | --- |
+| [cdr/](cdr/) | 当前向量求解器：数据、算例、SUPG、求解流程 |
+| [example_vector.py](example_vector.py) | 命令行示例 |
+| [verify_vector.py](verify_vector.py) | 数值正确性与收敛验证 |
+| [verify_vector_interfaces.py](verify_vector_interfaces.py) | 依赖与接口隔离验证 |
+| [results_final/](results_final/) | 原始数据、四张图、21 个 VTU 和 PVD |
+| [任务报告](docs/向量含时CDR_任务报告.md) | 模型、实现、全部结果与限制 |
+| [数学讲义](docs/CDR数学推导与学习讲义.md) | 从本科数学基础推到完整离散格式 |
+| [代码讲义](docs/CDR代码与FEALPy源码学习讲义.md) | 完整核心代码拆解及 FEALPy 源码导读 |
+| [ParaView 指南](docs/向量含时结果_ParaView指南.md) | 安装、播放、字段解释、保存图片 |
 
-## 项目结构
+`results_extension/`、旧版标量程序及既有报告保留作为前一阶段资料。新项目入口和新结果分别位于 `cdr/`、`results_final/`，避免把旧标量接口与当前向量数据约定混用。
 
-```text
-.
-├── pde/cdr_data.py          # 方程系数、初边值、制造解与符号求导
-├── cdr_lfem_solver.py       # 多维组装、稳态/含时求解、VTU/PVD 导出
-├── example_extension.py    # 无精确解的二维应用示例
-├── verify_extension.py     # 多维空间/时间验证、数据和报告生成
-├── verify_compatibility.py # FEALPy 接口与共享对象隔离验证
-├── requirements_extension.txt
-├── docs/                   # 任务报告、兼容性、使用与 ParaView 文档
-├── results_extension/      # CSV、JSON、PNG、VTU/PVD
-├── cdr_lfem_solver_1d.py    # 一维稳态核心
-├── cdr_solver.py           # 一维接口与四组制造解
-├── verify_*.py             # 一维单元矩阵、方程和集成验证
-└── results/                # 一维稳态实验数据与图片
-```
+## 适用范围
 
-PDE 类描述题目，求解器管理积分器、检查、组装和求解。核心模块不修改全局后端或 FEALPy 公共接口；导出保留调用者的网格数据，自定义线性求解器接收矩阵与右端副本。
+当前为 NumPy/CPU、仿射线段/三角形/四面体、P1/P2、盒形全 Dirichlet 边界、线性系统、均匀时间步。尚未实现各向异性张量/交叉扩散、混合边界、曲面单元、非线性或自适应时间步。
 
-一维稳态接口 `solve_cdr` 和 32 组实验继续保留，使用 `python cdr_solver.py`、`python verify_integrators.py`、`python verify_formulation.py` 运行。其设计及完整数据见 [一维任务报告](docs/一维求解器_任务报告.md)。
-
-## 支持范围与限制
-
-- 扩展求解器实测 NumPy/CPU、1/2/3 维盒形区域、连续 P1/P2、全 Dirichlet、正标量扩散与正容量。安装版 FEALPy 3.4.0 与本机开发源码均通过针对性兼容验证。
-- 更高维网格、张量扩散、混合边界、自适应时间步和对流稳定化尚未实现；强对流可能出现振荡。积分点正性检查不能证明任意输入的适定性。
-- 时间格式为一阶。VTU 输出顶点采样，不包含 P2 单元内部的高阶变化。
-- 符号数据使用 NumPy 求值。项目是独立应用模块，尚未注册为 FEALPy 官方模型，也未通过全库测试或其他后端验证。
-
-## 文档
-
-- [多维含时任务报告](docs/多维含时求解器_任务报告.md)
-- [扩展版使用说明](docs/扩展版使用说明.md)
-- [兼容性说明](docs/兼容性说明.md)
-- [ParaView 入门](docs/ParaView入门.md)
-- [一维入门说明](docs/一维求解器_入门说明.md)
-- [FEALPy 源码](https://github.com/weihuayi/fealpy)
+SUPG 不保证任意网格和反应矩阵的单调性或正性，也没有非线性横风激波捕捉。P2 的 VTU 是顶点采样，不能完整保留高阶形状。大规模三维问题需要进一步研究迭代求解和预条件。项目是基于 FEALPy 的独立应用，不代表库内官方模型已合入这些扩展。
