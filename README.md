@@ -81,9 +81,10 @@ SUPG 在这些算例中抑制了振荡。右图同时显示：粗网格上的线
 ```bash
 python verify_vector.py
 python build_final_report.py
+python illustrate_equation_properties.py
 ```
 
-第一条计算并保存 CSV、JSON 和 VTU，第二条重绘图片并更新报告。三维 P2 使用稀疏直接法，完整验证比小示例耗时更长。
+第一条计算并保存 CSV、JSON 和 VTU，第二条重绘图片并更新报告，第三条重绘数学讲义中的 Péclet 数与振荡机制图。三维 P2 使用稀疏直接法，完整验证比小示例耗时更长。
 
 接口隔离脚本额外用 PyTorch 模拟其他调用者的后端选择；正常求解不需要它：
 
@@ -102,9 +103,9 @@ python verify_vector_interfaces.py
 | [example_vector.py](example_vector.py) | 命令行示例 |
 | [verify_vector.py](verify_vector.py) | 数值正确性与收敛验证 |
 | [verify_vector_interfaces.py](verify_vector_interfaces.py) | 依赖与接口隔离验证 |
-| [results_final/](results_final/) | 原始数据、四张图、21 个 VTU 和 PVD |
+| [results_final/](results_final/) | 原始数据、数值结果图与方程分析图、21 个 VTU 和 PVD |
 | [任务报告](docs/向量含时CDR_任务报告.md) | 模型、实现、全部结果与限制 |
-| [数学讲义](docs/CDR数学推导与学习讲义.md) | 从本科数学基础推到完整离散格式 |
+| [数学讲义](docs/CDR数学推导与学习讲义.md) | 适定性、唯一性、能量估计、强对流振荡机制及完整离散推导 |
 | [代码讲义](docs/CDR代码与FEALPy源码学习讲义.md) | 完整核心代码拆解及 FEALPy 源码导读 |
 | [ParaView 指南](docs/向量含时结果_ParaView指南.md) | 安装、播放、字段解释、保存图片 |
 
