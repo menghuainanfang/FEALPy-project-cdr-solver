@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cdr-fealpy"
+version = "0.1.0"
+description = "Coupled convection diffusion reaction solver using FEALPy"
+requires-python = ">=3.11"
+dependencies = [
+  "fealpy==3.4.0", "numpy==2.3.4", "scipy==1.16.3",
+  "sympy==1.14.0", "matplotlib==3.10.7", "vtk==9.6.2"
+]
+
+[project.optional-dependencies]
+test = ["torch"]
+
+[tool.setuptools.packages.find]
+include = ["cdr", "cdr.*"]

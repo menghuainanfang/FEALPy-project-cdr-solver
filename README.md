@@ -1,118 +1,118 @@
-# FEALPy 多维向量含时 CDR 求解器
+# FEALPy CDR 求解器
 
-用有限元求解 **1、2、3 维、多个耦合分量、时变系数**的对流–扩散–反应方程。支持 **P1/P2、后向欧拉、二阶 BDF2、SUPG 强对流稳定化、VTU/PVD 时间序列**，附可复现数值验证、图片、任务报告和两份完整学习讲义。
+用有限元求解对流—扩散—反应方程，从一维稳态逐步扩展到 **1—3 维、多物质耦合、含时与强对流稳定化**。本仓库同时提供可运行程序、零基础培训讲义和汇报网页。
 
-![两个耦合分量的初值、终态与顶点误差](results_final/field.png)
+[在线汇报](https://menghuainanfang.github.io/FEALPy-project-cdr-solver/) · [任务与成果报告](05_汇报/任务工作与产出成果.md) · [数学讲义](02_学习讲义/01_数学原理讲义.md) · [程序讲义](02_学习讲义/02_程序入门讲义.md) · [开发阶段档案](06_开发阶段/README.md)
 
-## 方程
+![双分量含时计算结果](05_汇报/成果数据/field.png)
+
+## 项目解决什么问题
+
+对第 r 个物质求解：
 
 $$
-d(\boldsymbol x,t)\partial_tu_i-\nabla\cdot(a(\boldsymbol x,t)\nabla u_i)
-+\boldsymbol b(\boldsymbol x,t)\cdot\nabla u_i
-+\sum_{j=1}^m C_{ij}(\boldsymbol x,t)u_j=f_i,\quad i=1,\ldots,m.
+d(\boldsymbol{x},t)\partial_tu_r
+-\nabla\cdot(a(\boldsymbol{x},t)\nabla u_r)
++\boldsymbol b(\boldsymbol{x},t)\cdot\nabla u_r
++\sum_{s=1}^{m}C_{rs}(\boldsymbol{x},t)u_s=f_r.
 $$
 
-空间维数 D 与未知量分量数 m 独立。a、d 为各分量共享的正标量，b 是公共空间速度，C 是反应耦合矩阵；非对角元允许分量间耦合。系数均可依赖空间和时间。时间项为 $d u_t$。边界采用全 Dirichlet 条件，含时问题另给初值。
+扩散描述浓度的空间均匀化，对流描述输运，反应矩阵描述各物质的相互作用，容量控制时间变化。空间维数与物质数相互独立。模型给出系数、源项、边界和初值；求解器返回有限元系数及随时间变化的场。
+
+当前支持一次/二次拉格朗日有限元（P1/P2）、后向欧拉法（BE）、二阶后向差分公式（BDF2）、流线迎风彼得罗夫—伽辽金法（SUPG）、VTU/PVD 时序输出。
+
+## 三个入口
+
+**汇报展示**：打开上方在线汇报，或下载整个仓库后双击「打开汇报网页.cmd」。也可直接打开 05_汇报/index.html。离线网页不需要 Python、服务器或网络。
+
+**运行程序**：进入 01_程序，按照下面的命令安装，先运行三个节点的手算对照，再运行双分量演示。
+
+**系统学习**：从 [学习顺序](04_学习路线/01_学习顺序.md) 开始。数学与程序两份主讲义分别建立概念和实现主线；[FEALPy 拆解](03_FEALPy学习/00_库与项目的边界.md) 单独解释原生库；[联合逐行阅读路线](04_学习路线/03_FEALPy与求解器逐行阅读.md) 连接两边的源码。
+
+## 目录
+
+| 路径 | 职责 |
+|---|---|
+| 01_程序/ | 当前维护的 cdr 包、示例、验证与安装配置 |
+| 02_学习讲义/ | 数学原理、程序入门两份主讲义 |
+| 03_FEALPy学习/ | FEALPy 的网格、空间、积分器、装配、边界与求解 |
+| 04_学习路线/ | 难度递进、练习、学习断点与后续源码路线 |
+| 05_汇报/ | 离线网站、详细任务报告、结果图与验证数据 |
+| 06_开发阶段/ | 按开发能力划分的历史入口与完整版本下载 |
+
+历史代码通过固定提交保存，当前目录只维护一套求解器。阶段编号表示开发能力层次，不代表 Python 包版本或对旧接口的兼容承诺。
 
 ## 快速运行
 
-实测 Python 3.13.2、FEALPy 3.4.0、NumPy 2.3.4、SciPy 1.16.3、SymPy 1.14.0、Matplotlib 3.10.7、VTK 9.6.2。建议使用独立虚拟环境。
+推荐 Python 3.13；当前依赖要求 Python ≥3.11。首次安装需要联网。Windows：
 
-```bash
+```powershell
 git clone https://github.com/menghuainanfang/FEALPy-project-cdr-solver.git
-cd FEALPy-project-cdr-solver
+cd FEALPy-project-cdr-solver/01_程序
 python -m venv .venv
+.venv\Scripts\python -m pip install -e .
+.venv\Scripts\python example_minimal.py
+.venv\Scripts\python example_vector.py --dim 2 --n 4 --p 1 --steps 4 --output output/demo
 ```
 
-Windows PowerShell 激活：`.\.venv\Scripts\Activate.ps1`；Linux/macOS：`source .venv/bin/activate`。
+macOS/Linux 使用 python3 创建环境，将后续解释器替换成 .venv/bin/python。也可在 Windows 双击 setup.cmd，再运行 run.cmd。完整说明与每个程序的分类见 [程序 README](01_程序/README.md)。
 
-```bash
-python -m pip install -r requirements_extension.txt
-python example_vector.py --dim 2 --n 12 --p 2 --steps 20
-```
+最小例子求解 −u''=2、u(0)=u(1)=0，打印节点 [0,0.5,1] 与值 [0,0.25,0]。双分量例子的 output/demo/solution.pvd 可用 ParaView 播放。
 
-结果写入 `output/vector/`。在 ParaView 中打开 `solution.pvd`，点击 Apply，选择 `u_0` 或 `u_1`，播放时间序列。仓库已有 [21 帧结果](results_final/vtu/solution.pvd)，详见 [ParaView 指南](docs/向量含时结果_ParaView指南.md)。
-
-## 定义自己的问题
+## 项目代码与 FEALPy 的边界
 
 ```python
-from fealpy.backend import backend_manager as bm
-from cdr import CDRSolver, SymbolicCDR, box_mesh
+from fealpy.backend import backend_manager as bm  # FEALPy 原生接口
+from cdr import CDRSolver, SymbolicCDR, box_mesh   # 本项目接口
 
-bm.set_backend('numpy')
+bm.set_backend("numpy")
 pde = SymbolicCDR(
-    2, components=2,
-    a='0.01*(1+t)', b=['1+t', '0.2'], d='1+t',
+    dim=2, components=2,
+    a="0.01*(1+t)", b=["1+t", "0.2"], d="1+t",
     reaction=[[2, -1], [-1, 2]],
     source=[1, 0], boundary=[0, 0], initial=[0, 0],
 )
-solver = CDRSolver(pde, box_mesh(pde, 12), p=1, stabilization='supg')
-solver.solve_time(0.2, 20, scheme='bdf2', output='output/my_case')
-print(solver.history[-1])
+solver = CDRSolver(pde, box_mesh(pde, n=12), p=1)
+uh = solver.solve_time(0.2, 20, output="output/my_case")
 ```
 
-符号坐标为 `x,y,z,t`。也可继承 `CDRModel`，按 FEALPy 风格直接编写 `source(p,t)` 等方法，使用 `x=p[...,0]` 提取坐标；完整例子见 [cdr/cases.py](cdr/cases.py)。`exact=[...]` 可由制造解自动生成源项、边界和初值；未知精确解时直接输入实际数据。`solve_steady(t=...)` 求指定系数时刻的稳态问题。
+该例没有提供精确解。SymbolicCDR 是项目的符号数据模型，也可以继承项目 CDRModel 用普通数组方法提供数据。
+
+FEALPy 提供网格、LagrangeFESpace、TensorFunctionSpace、标准积分器、BlockForm、DirichletBC 和 spsolve；项目提供 CDR 数据约定、分量耦合组织、时间推进与 SUPG 局部残差。Python 解释器负责执行代码，不等同于上述求解器。安装本项目不会把这些项目接口添加到 FEALPy 原生命名空间，也不代表已被官方收录。
 
 ## 数值证据
 
-- 36 组空间加密实验覆盖 1—3 维、Galerkin/SUPG、P1/P2。平滑问题中 P1 趋近 $L^2$ 二阶、梯度误差一阶；P2 趋近三阶和二阶。
-- 24 组时间加密实验用空间可精确表示的二次解分离时间误差。BDF2 最后一级观测阶约 **1.99—2.00**，后向欧拉约 **1.00**。
-- 一至三维二次空间、一次时间的耦合解再现，检查完整 SUPG 残差；另用独立符号微分核对手工源项。
-- 固定 f 删除反应非对角元，解发生变化；VTK 读回与 FE 顶点值一致。无精确解输入、四分量导出和接口隔离均有验证。
+2026-10-10 在 Windows、Python 3.13.2、FEALPy 3.4.0 下通过完整验证：
 
-![空间收敛](results_final/spatial.png)
+- 36 组空间收敛：覆盖 1—3 维、P1/P2、Galerkin/SUPG。
+- 24 组时间收敛：后向欧拉约一阶，BDF2 最后一级观测阶约 1.99—2.00。
+- 6 组多项式一致性、6 组强对流对比、3 组边界层加密。
+- 非对角反应耦合、源项独立核对、VTU 读回与接口隔离。
+- 安装版与本地 FEALPy 源码接口测试，以及项目外目录安装调用。
 
-![时间收敛](results_final/temporal.png)
+![空间收敛](05_汇报/成果数据/spatial.png)
 
-强对流边界层取 $\varepsilon=0.001$、速度沿 x 轴、精确值范围 $[0,1]$。节点上下界如下，未做数值截断：
+原始 CSV、JSON 和 21 帧时序结果位于 [成果数据](05_汇报/成果数据)。具体网格、误差、条件与解释见 [任务报告](05_汇报/任务工作与产出成果.md)。残差小不等于 PDE 离散误差小，SUPG 抑制振荡也不等于边界层已被充分解析。
 
-| 维数 / 每方向分段 | Galerkin 最小值 | Galerkin 最大值 | SUPG 节点范围 |
-| --- | --- | --- | --- |
-| 1D / 32 | −0.9113 | 1.0000 | [0,1]，舍入误差内 |
-| 2D / 32 | −1.2402 | 1.2646 | [0,1]，舍入误差内 |
-| 3D / 8 | −7.1244 | 2.8119 | [0,1]，舍入误差内 |
+在 01_程序 目录复现：
 
-![强对流振荡与出口边界层放大](results_final/layer.png)
-
-SUPG 在这些算例中抑制了振荡。右图同时显示：粗网格上的线性函数还不能精确表示很薄的边界层。稳定性和解析精度需要分别判断。完整数值、参数和解释见 [任务报告](docs/向量含时CDR_任务报告.md)。
-
-## 复现与兼容性
-
-```bash
-python verify_vector.py
-python build_final_report.py
-python illustrate_equation_properties.py
-```
-
-第一条计算并保存 CSV、JSON 和 VTU，第二条重绘图片并更新报告，第三条重绘数学讲义中的 Péclet 数与振荡机制图。三维 P2 使用稀疏直接法，完整验证比小示例耗时更长。
-
-接口隔离脚本额外用 PyTorch 模拟其他调用者的后端选择；正常求解不需要它：
-
-```bash
+```text
+python check_environment.py
+python verify_vector.py --output output/verification
 python -m pip install torch
-python verify_vector_interfaces.py
+python verify_vector_interfaces.py output/interfaces.json
 ```
 
-测试通过 FEALPy 3.4.0 安装版及本机源码检出 `v3.4.1-47-ge033533bd-dirty`。未修改 FEALPy；导入不改变全局后端或 sys.path；导出不改调用者的网格节点数据。证据见 [安装版接口记录](results_final/interfaces_installed.json)和[源码版接口记录](results_final/interfaces_source.json)。
+以上 python 指安装了本项目的虚拟环境解释器。torch 只用于接口验证中的后端隔离检查，实际求解不依赖它。
 
-## 文件导航
+## 开发阶段与后续学习
 
-| 位置 | 内容 |
-| --- | --- |
-| [cdr/](cdr/) | 当前向量求解器：数据、算例、SUPG、求解流程 |
-| [example_vector.py](example_vector.py) | 命令行示例 |
-| [verify_vector.py](verify_vector.py) | 数值正确性与收敛验证 |
-| [verify_vector_interfaces.py](verify_vector_interfaces.py) | 依赖与接口隔离验证 |
-| [results_final/](results_final/) | 原始数据、数值结果图与方程分析图、21 个 VTU 和 PVD |
-| [任务报告](docs/向量含时CDR_任务报告.md) | 模型、实现、全部结果与限制 |
-| [数学讲义](docs/CDR数学推导与学习讲义.md) | 适定性、唯一性、能量估计、强对流振荡机制及完整离散推导 |
-| [代码讲义](docs/CDR代码与FEALPy源码学习讲义.md) | 完整核心代码拆解及 FEALPy 源码导读 |
-| [ParaView 指南](docs/向量含时结果_ParaView指南.md) | 安装、播放、字段解释、保存图片 |
+[00 问题调研](06_开发阶段/00_问题调研/README.md) → [01 一维稳态](06_开发阶段/01_一维稳态/README.md) → [02 多维标量含时](06_开发阶段/02_多维标量含时/README.md) → [03 多分量与稳定化](06_开发阶段/03_多分量与稳定化/README.md) → 当前可安装程序与培训交付。
 
-`results_extension/`、旧版标量程序及既有报告保留作为前一阶段资料。新项目入口和新结果分别位于 `cdr/`、`results_final/`，避免把旧标量接口与当前向量数据约定混用。
+学习路线从三节点手算开始，再解释数组形状与自由度排列；随后结合 FEALPy 源码阅读装配、边界、时间推进，最后阅读 SUPG。后续逐行教学将以当前程序为主，历史版本用于比较能力如何扩展，不混用不同阶段的接口。
 
 ## 适用范围
 
-当前为 NumPy/CPU、仿射线段/三角形/四面体、P1/P2、盒形全 Dirichlet 边界、线性系统、均匀时间步。尚未实现各向异性张量/交叉扩散、混合边界、曲面单元、非线性或自适应时间步。
+当前为 NumPy/CPU、仿射线段/三角形/四面体、P1/P2、轴对齐盒区域、全 Dirichlet 边界、正标量扩散与容量、共享输运系数和线性反应耦合、固定时间步。尚不支持各向异性或交叉扩散、混合边界、非线性反应、GPU 或自适应时间步。
 
-SUPG 不保证任意网格和反应矩阵的单调性或正性，也没有非线性横风激波捕捉。P2 的 VTU 是顶点采样，不能完整保留高阶形状。大规模三维问题需要进一步研究迭代求解和预条件。项目是基于 FEALPy 的独立应用，不代表库内官方模型已合入这些扩展。
+SUPG 不保证任意问题的非负性。P2 的 VTU 输出为顶点采样，不保存全部二次自由度。macOS/Linux 尚无本项目的实机验证；安装步骤与本机测试环境分别标注。
