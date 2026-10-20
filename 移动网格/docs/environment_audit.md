@@ -1,5 +1,9 @@
 # 环境审查
 
+## 当前本地入口
+
+工作库固定为 `D:/桌面/movingmesh`，主线项目位于 `移动网格/`，现用解释器为 `D:/桌面/movingmesh/移动网格/.venv/Scripts/python.exe`，FEALPy 仍从 `C:/Users/10251/fealpy` 导入。
+
 ## 当前演示环境（2026-10-17）
 
 本机 `C:/Users/10251/fealpy` 已在原目录快进到官方 develop 提交 `69faa5f41e3c12633ed714520c3ec512eb1a784b`（2026-10-14）。本地分支名仍为 feature；项目 `.venv` 的 editable 导入直接使用更新后的代码，包元数据仍显示 3.4.0，应以源码提交区分版本。

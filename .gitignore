@@ -24,3 +24,5 @@ tmp/
 !/移动网格/results/f_poisson_comparison.json
 !/移动网格/results/f_poisson_comparison.csv
 !/移动网格/results/f_poisson_comparison.png
+
+/学习练手项目/cdr-solver/交付存档/*.zip
