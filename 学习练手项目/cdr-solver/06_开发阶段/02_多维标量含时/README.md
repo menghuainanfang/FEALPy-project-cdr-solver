@@ -2,10 +2,10 @@
 
 通过 cdr_lfem_solver.py 和 pde/ 扩展到多维单物质含时问题。example_extension.py 演示无精确解输入，verify_extension.py 检查空间与时间误差；快照保留当时用于回归的一维代码。空间维数增加不等于物质数增加。
 
-- [完整阶段源码与文档](https://github.com/menghuainanfang/FEALPy-project-cdr-solver/tree/0c8cb506cf24b821b80e5e333a29937fdb2182ad)
-- [阶段 README](https://github.com/menghuainanfang/FEALPy-project-cdr-solver/blob/0c8cb506cf24b821b80e5e333a29937fdb2182ad/README.md)
-- [主要阅读入口](https://github.com/menghuainanfang/FEALPy-project-cdr-solver/blob/0c8cb506cf24b821b80e5e333a29937fdb2182ad/cdr_lfem_solver.py)
-- [下载本阶段完整 ZIP](https://github.com/menghuainanfang/FEALPy-project-cdr-solver/archive/0c8cb506cf24b821b80e5e333a29937fdb2182ad.zip)
+- [完整阶段源码与文档](https://github.com/menghuainanfang/research-workspace/tree/0c8cb506cf24b821b80e5e333a29937fdb2182ad)
+- [阶段 README](https://github.com/menghuainanfang/research-workspace/blob/0c8cb506cf24b821b80e5e333a29937fdb2182ad/README.md)
+- [主要阅读入口](https://github.com/menghuainanfang/research-workspace/blob/0c8cb506cf24b821b80e5e333a29937fdb2182ad/cdr_lfem_solver.py)
+- [下载本阶段完整 ZIP](https://github.com/menghuainanfang/research-workspace/archive/0c8cb506cf24b821b80e5e333a29937fdb2182ad.zip)
 
 固定提交：`0c8cb506cf24b821b80e5e333a29937fdb2182ad`。
 

@@ -7,7 +7,7 @@
 | **移动网格** | 毕业论文主线：论文精读、学习交流、算法代码、数值实验与研究产出 | [研究说明](移动网格/README.md) · [研究网页](移动网格/index.html) |
 | **学习练手项目** | 独立学习任务、编程练习与科研小项目，目前归档已完成交付的 FEALPy CDR 求解器 | [项目目录](学习练手项目/README.md) · [项目网页](学习练手项目/index.html) |
 
-[在线首页](https://menghuainanfang.github.io/FEALPy-project-cdr-solver/)
+[在线首页](https://menghuainanfang.github.io/research-workspace/)
 
 ```text
 movingmesh/

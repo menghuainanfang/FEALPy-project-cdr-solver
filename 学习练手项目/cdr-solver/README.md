@@ -6,7 +6,7 @@
 
 用有限元求解对流—扩散—反应方程，从一维稳态逐步扩展到 **1—3 维、多物质耦合、含时与强对流稳定化**。本仓库同时提供可运行程序、零基础培训讲义和汇报网页。
 
-[在线汇报](https://menghuainanfang.github.io/FEALPy-project-cdr-solver/学习练手项目/cdr-solver/05_%E6%B1%87%E6%8A%A5/index.html) · [任务与成果报告](05_汇报/任务工作与产出成果.md) · [数学讲义](02_学习讲义/01_数学原理讲义.md) · [程序讲义](02_学习讲义/02_程序入门讲义.md) · [开发阶段档案](06_开发阶段/README.md)
+[在线汇报](https://menghuainanfang.github.io/research-workspace/学习练手项目/cdr-solver/05_%E6%B1%87%E6%8A%A5/index.html) · [任务与成果报告](05_汇报/任务工作与产出成果.md) · [数学讲义](02_学习讲义/01_数学原理讲义.md) · [程序讲义](02_学习讲义/02_程序入门讲义.md) · [开发阶段档案](06_开发阶段/README.md)
 
 ![双分量含时计算结果](05_汇报/成果数据/field.png)
 
@@ -51,8 +51,8 @@ $$
 推荐 Python 3.13；当前依赖要求 Python ≥3.11。首次安装需要联网。Windows：
 
 ```powershell
-git clone https://github.com/menghuainanfang/FEALPy-project-cdr-solver.git
-cd FEALPy-project-cdr-solver/学习练手项目/cdr-solver/01_程序
+git clone https://github.com/menghuainanfang/research-workspace.git
+cd research-workspace/学习练手项目/cdr-solver/01_程序
 python -m venv .venv
 .venv\Scripts\python -m pip install -e .
 .venv\Scripts\python example_minimal.py
