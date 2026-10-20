@@ -51,7 +51,8 @@ def main():
             "Includes the local FEALPy source snapshot used by the demonstrations.\n"
             "No Git history, Python environment, paper PDFs or personal study notes included.\n",
             encoding="utf-8")
-        archive = ROOT.parent / f"{NAME}.zip"
+        archive = ROOT / "exports" / f"{NAME}.zip"
+        archive.parent.mkdir(parents=True, exist_ok=True)
         with zipfile.ZipFile(archive, "w", compression=zipfile.ZIP_DEFLATED) as output:
             for source in sorted(package.rglob("*")):
                 if source.is_file():
