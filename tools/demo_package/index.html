@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="zh-CN">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>移动网格演示</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f0f5f3;color:#17343c;font:16px/1.8 system-ui,"Microsoft YaHei",sans-serif}main{max-width:850px;margin:60px auto;padding:24px}h1{font-size:32px;margin:0}p{color:#58717b}a.card{display:block;text-decoration:none;color:inherit;background:#fff;border:1px solid #d5e0df;border-radius:14px;padding:22px;margin:20px 0}a.card:hover{border-color:#087f82}a:focus-visible{outline:3px solid #cf8c32;outline-offset:4px}h2{font-size:21px;margin:0;color:#087f82}.card p{margin:6px 0 0}.tag{font-size:12px;color:#087f82;letter-spacing:2px}footer{font-size:13px;color:#58717b}@media(max-width:600px){main{margin:16px auto;padding:18px}h1{font-size:27px}}
+</style>
+<main>
+<div class="tag">FEALPY · 离线交互演示</div>
+<h1>从网格移动，到 PDE 精度</h1>
+<p>两个演示均已内嵌计算结果，可以离线打开、播放和切换视图。</p>
+<a class="card" href="results/e_variational_mesh.html"><h2>网格映射与边界切向移动 →</h2><p>对照固定和切向边界，跟踪同一顶点的计算/物理坐标，查看能量、边界位移与对齐/等分布指标。</p></a>
+<a class="card" href="results/f_poisson_comparison.html"><h2>Poisson 方程的网格精度对比 →</h2><p>同自由度比较均匀、扰动、平滑及自适应网格，查看实际有限元解、误差、收敛曲线和移动成本。</p></a>
+<footer>重新计算、安装方法与源码结构见同目录 README.md。网页回放既有结果，重新计算需要 Python 环境。</footer>
+</main>
+</html>

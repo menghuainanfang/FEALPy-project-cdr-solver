@@ -1,8 +1,33 @@
 .venv/
 __pycache__/
-*.py[cod]
+tmp/
+.pytest_cache/
+*.pyc
+results/*.png
+results/*.csv
+results/*.json
+results/*.log
+results/*.html
+
+# Local literature and reading exports
+/论文精读/papers/
+/论文精读/exports/
+/论文精读/tmp/
+/*.pdf
+/*.zip
+
+# Python project build products
 *.egg-info/
 build/
 dist/
 output/
 *.log
+
+# Selected research demonstrations and their data
+!results/e_variational_mesh.html
+!results/e_variational_mesh.json
+!results/e_variational_mesh.png
+!results/f_poisson_comparison.html
+!results/f_poisson_comparison.json
+!results/f_poisson_comparison.csv
+!results/f_poisson_comparison.png

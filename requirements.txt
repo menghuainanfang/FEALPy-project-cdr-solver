@@ -1,0 +1,7 @@
+# Direct Python dependencies used by this repository.
+# Install FEALPy from the recorded source checkout before using this file.
+numpy
+scipy
+matplotlib
+pytest
+

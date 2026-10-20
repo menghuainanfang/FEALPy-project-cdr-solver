@@ -1,0 +1,766 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="data:,">
+  <title>CDR 求解器：从局部收支到有限元程序</title>
+  <style>
+    :root {
+      --paper: #f5f2e9;
+      --paper-strong: #ebe5d8;
+      --ink: #25312d;
+      --muted: #68736e;
+      --green: #456b58;
+      --green-soft: #dfe8df;
+      --rust: #a45d3e;
+      --line: rgba(37, 49, 45, 0.18);
+      --shadow: 0 18px 50px rgba(42, 48, 43, 0.12);
+    }
+
+    * { box-sizing: border-box; }
+
+    html {
+      scroll-behavior: smooth;
+      scroll-snap-type: y mandatory;
+      background: var(--paper);
+    }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 12% 8%, rgba(69, 107, 88, 0.08), transparent 28rem),
+        var(--paper);
+      font-family: "Microsoft YaHei", "Noto Sans SC", system-ui, sans-serif;
+      line-height: 1.65;
+    }
+
+    button { font: inherit; }
+
+    .topbar {
+      position: fixed;
+      inset: 0 0 auto 0;
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      height: 54px;
+      padding: 0 26px;
+      color: var(--ink);
+      background: color-mix(in srgb, var(--paper) 88%, transparent);
+      border-bottom: 1px solid var(--line);
+      backdrop-filter: blur(12px);
+    }
+
+    .brand {
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      white-space: nowrap;
+    }
+
+    .progress-track {
+      flex: 1;
+      height: 3px;
+      overflow: hidden;
+      background: var(--paper-strong);
+    }
+
+    .progress-bar {
+      width: 8.33%;
+      height: 100%;
+      background: var(--green);
+      transition: width 220ms ease;
+    }
+
+    .counter {
+      min-width: 54px;
+      color: var(--muted);
+      font-variant-numeric: tabular-nums;
+      text-align: right;
+    }
+
+    main { width: 100%; }
+
+    .slide {
+      min-height: 100svh;
+      min-width: 0;
+      scroll-snap-align: start;
+      display: grid;
+      align-items: center;
+      padding: 88px max(5vw, 28px) 72px;
+    }
+
+    .slide-inner {
+      width: min(1120px, 100%);
+      min-width: 0;
+      margin: 0 auto;
+    }
+
+    .eyebrow {
+      margin: 0 0 12px;
+      color: var(--rust);
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    h1, h2, h3, p { margin-top: 0; }
+
+    h1 {
+      max-width: 920px;
+      margin-bottom: 22px;
+      font-family: Georgia, "Noto Serif SC", "Songti SC", serif;
+      font-size: clamp(44px, 7vw, 82px);
+      line-height: 1.08;
+      letter-spacing: -0.035em;
+    }
+
+    h2 {
+      margin-bottom: 28px;
+      font-family: Georgia, "Noto Serif SC", "Songti SC", serif;
+      font-size: clamp(32px, 4.5vw, 56px);
+      line-height: 1.15;
+      letter-spacing: -0.025em;
+    }
+
+    h3 {
+      margin-bottom: 8px;
+      font-size: 18px;
+    }
+
+    .lead {
+      max-width: 780px;
+      color: var(--muted);
+      font-size: clamp(18px, 2vw, 24px);
+    }
+
+    .hero-rule {
+      width: 92px;
+      height: 5px;
+      margin: 30px 0;
+      background: var(--rust);
+    }
+
+    .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px 24px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .grid-2,
+    .grid-3,
+    .grid-4 {
+      display: grid;
+      gap: 22px;
+    }
+
+    .grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .grid-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    .grid-2 > *, .grid-3 > *, .grid-4 > * { min-width: 0; }
+
+    .panel {
+      padding: 22px;
+      background: rgba(255, 255, 255, 0.38);
+      border-top: 3px solid var(--green);
+    }
+
+    .panel p:last-child { margin-bottom: 0; }
+
+    .formula {
+      margin: 22px 0;
+      padding: 18px 22px;
+      overflow-x: auto;
+      color: var(--ink);
+      background: var(--green-soft);
+      border-left: 5px solid var(--green);
+      font-family: Cambria, "Times New Roman", serif;
+      font-size: clamp(18px, 2.2vw, 28px);
+      line-height: 1.45;
+      white-space: nowrap;
+    }
+
+    .small-formula {
+      font-family: Cambria, "Times New Roman", serif;
+      font-size: 18px;
+    }
+
+    .flow {
+      display: flex;
+      align-items: stretch;
+      gap: 10px;
+      margin-top: 28px;
+    }
+
+    .flow-step {
+      flex: 1;
+      display: grid;
+      place-items: center;
+      min-height: 88px;
+      padding: 14px;
+      text-align: center;
+      background: rgba(255, 255, 255, 0.45);
+      border: 1px solid var(--line);
+    }
+
+    .arrow {
+      align-self: center;
+      color: var(--rust);
+      font-size: 26px;
+    }
+
+    .mesh-figure {
+      padding: 24px;
+      background: rgba(255, 255, 255, 0.42);
+      border: 1px solid var(--line);
+    }
+
+    .mesh-figure svg {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+
+    .matrix-map {
+      display: grid;
+      grid-template-columns: 88px 1fr 1.35fr;
+      gap: 1px;
+      overflow: hidden;
+      background: var(--line);
+      border: 1px solid var(--line);
+    }
+
+    .matrix-map > div {
+      padding: 13px 15px;
+      background: var(--paper);
+    }
+
+    .matrix-symbol {
+      display: grid;
+      place-items: center;
+      color: var(--rust);
+      font: 700 28px/1 Georgia, serif;
+    }
+
+    pre {
+      margin: 0;
+      max-width: 100%;
+      padding: 22px;
+      overflow-x: auto;
+      color: #e8eee9;
+      background: #2c3933;
+      box-shadow: var(--shadow);
+      font: 14px/1.65 Consolas, "Courier New", monospace;
+    }
+
+    .image-frame {
+      overflow: hidden;
+      background: #fff;
+      box-shadow: var(--shadow);
+    }
+
+    .image-frame img {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+
+    .caption {
+      margin: 10px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .mistake {
+      margin-top: 16px;
+      padding: 11px 15px;
+      color: var(--muted);
+      background: rgba(164, 93, 62, 0.07);
+      border-left: 3px solid var(--rust);
+      font-size: 14px;
+      line-height: 1.65;
+    }
+
+    .mistake strong {
+      margin-right: 8px;
+      color: var(--rust);
+    }
+
+    .result-row {
+      display: grid;
+      grid-template-columns: 1.35fr 1fr;
+      gap: 24px;
+      align-items: center;
+    }
+
+    .metric {
+      padding: 16px 0;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .metric strong {
+      display: block;
+      color: var(--green);
+      font-family: Georgia, serif;
+      font-size: 28px;
+    }
+
+    .controls {
+      position: fixed;
+      right: 22px;
+      bottom: 18px;
+      z-index: 20;
+      display: flex;
+      gap: 8px;
+    }
+
+    .controls button {
+      width: 42px;
+      height: 42px;
+      color: var(--ink);
+      background: color-mix(in srgb, var(--paper) 92%, transparent);
+      border: 1px solid var(--line);
+      border-radius: 50%;
+      backdrop-filter: blur(8px);
+    }
+
+    .controls button:hover { background: var(--paper-strong); }
+    .controls button:focus-visible { outline: 3px solid var(--rust); outline-offset: 2px; }
+
+    .closing {
+      background:
+        linear-gradient(135deg, rgba(69, 107, 88, 0.13), rgba(164, 93, 62, 0.07)),
+        var(--paper);
+    }
+
+    .takeaway {
+      max-width: 930px;
+      font-family: Georgia, "Noto Serif SC", "Songti SC", serif;
+      font-size: clamp(25px, 3.4vw, 44px);
+      line-height: 1.45;
+    }
+
+    @media (max-width: 780px) {
+      .slide { min-height: auto; padding: 84px 20px 76px; }
+      .grid-2, .grid-3, .grid-4, .result-row { grid-template-columns: 1fr; }
+      .flow { flex-direction: column; }
+      .arrow { transform: rotate(90deg); }
+      .matrix-map { grid-template-columns: 64px 1fr; }
+      .matrix-map .definition { grid-column: 1 / -1; }
+      .formula { white-space: normal; overflow-wrap: anywhere; }
+      .topbar { padding: 0 14px; }
+      .brand { max-width: 46vw; overflow: hidden; text-overflow: ellipsis; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html { scroll-behavior: auto; }
+      .progress-bar { transition: none; }
+    }
+
+    @media print {
+      html { scroll-snap-type: none; }
+      .topbar, .controls { display: none; }
+      .slide { min-height: 100vh; break-after: page; padding-top: 48px; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar" aria-label="演示进度">
+    <div class="brand">CDR 求解器学习汇报</div>
+    <div class="progress-track" aria-hidden="true"><div class="progress-bar" id="progressBar"></div></div>
+    <div class="counter"><span id="currentSlide">01</span> / <span id="totalSlides">16</span></div>
+  </header>
+
+  <main>
+    <section class="slide" id="slide-1">
+      <div class="slide-inner">
+        <p class="eyebrow">Convection · Diffusion · Reaction ／ 对流 · 扩散 · 反应</p>
+        <h1>从局部收支<br>到有限元程序</h1>
+        <div class="hero-rule"></div>
+        <p class="lead">用一条容易理解的主线，说明多维、向量、含时 CDR（对流—扩散—反应）方程如何变成 FEALPy 可以求解的线性系统。</p>
+        <div class="meta">
+          <span>1–3 维</span><span>多个耦合分量</span><span>P1 / P2：一次 / 二次有限元</span><span>BE / BDF2：后向欧拉 / 二阶后向差分</span><span>Galerkin / SUPG：伽辽金 / 流线迎风稳定化</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide" id="slide-2">
+      <div class="slide-inner">
+        <p class="eyebrow">01 · 从一个位置开始</p>
+        <h2>先把变化看成一笔收支账</h2>
+        <div class="grid-2">
+          <article class="panel">
+            <h3>先不考虑空间移动</h3>
+            <div class="formula">d u<sub>t</sub> + cu = f</div>
+            <p>这就是一个单变量常微分方程：本地反应消耗 <em>cu</em>，外部源补入 <em>f</em>。</p>
+          </article>
+          <article class="panel">
+            <h3>带数字的例子</h3>
+            <div class="small-formula">u<sub>t</sub> = 30 − 2u</div>
+            <p>当 <em>u&lt;15</em> 时浓度增长；当 <em>u&gt;15</em> 时浓度下降；最后趋向平衡值 15。</p>
+          </article>
+        </div>
+        <div class="grid-4">
+          <article class="panel"><h3>扩散</h3><p>高浓度向低浓度摊开，削峰填谷。</p></article>
+          <article class="panel"><h3>对流</h3><p>水流搬运整团物质，固定点接收新的上游水团。</p></article>
+          <article class="panel"><h3>反应</h3><p>物质在当地被消耗、生成，或在多个分量之间转化。</p></article>
+          <article class="panel"><h3>外部源</h3><p>从体系外加入或抽走物质。</p></article>
+        </div>
+        <p class="lead">加入空间作用后，每个位置的这本“账”才会互相联系。容量系数 <em>d</em> 越大，同样的净作用引起的变化越慢。</p>
+      </div>
+    </section>
+
+    <section class="slide" id="slide-2a">
+      <div class="slide-inner">
+        <p class="eyebrow">02 · 两种空间作用</p>
+        <h2>扩散看净流入，对流看上游水团</h2>
+        <div class="grid-2">
+          <article class="panel">
+            <h3>扩散：哪里不均匀，哪里就会摊平</h3>
+            <div class="formula">J<sub>diff</sub> = −a∇u</div>
+            <div class="small-formula">扩散净流入 = ∇·(a∇u)</div>
+            <p>梯度给出流动方向；散度比较一个小区域四周“进来多少、出去多少”。低谷处净流入为正，浓度上升。</p>
+          </article>
+          <article class="panel">
+            <h3>对流：流体把已有分布整体搬运</h3>
+            <div class="formula">u<sub>t</sub> + b·∇u = 0</div>
+            <p>固定观察一个位置时，下一刻到达的是上游水团。它不是凭空产生物质，而是空间搬运造成的局部变化。</p>
+          </article>
+        </div>
+        <div class="formula">空间作用把每个位置上的局部 ODE（常微分方程）连接成 PDE（偏微分方程）</div>
+        <aside class="mistake"><strong>易错提醒</strong>扩散项为正表示这个小区域的总净流入为正，不必硬说成“左边进来”或“右边进来”；散度统计的是四周合起来的结果。</aside>
+      </div>
+    </section>
+
+    <section class="slide" id="slide-3">
+      <div class="slide-inner">
+        <p class="eyebrow">03 · 从收支到方程</p>
+        <h2>先写“为什么变”，再统一移项</h2>
+        <div class="grid-2">
+          <div>
+            <h3>局部收支形式</h3>
+            <div class="formula">d u<sub>t</sub> = ∇·(a∇u) − b·∇u − cu + f</div>
+            <p>右边依次对应扩散净流入、对流、反应和外部源。</p>
+          </div>
+          <div>
+            <h3>项目采用的形式</h3>
+            <div class="formula">d u<sub>t</sub> − ∇·(a∇u) + b·∇u + cu = f</div>
+            <p>正负号来自移项。扩散项仍然表示周围流量的净收支。</p>
+          </div>
+        </div>
+        <div class="grid-2">
+          <div class="small-formula">初值：u(x,0) = u<sub>0</sub>(x)</div>
+          <div class="small-formula">边界：u = g 在 ∂Ω 上</div>
+        </div>
+        <aside class="mistake"><strong>易错提醒</strong>变系数扩散必须用乘积法则：一维中 (au<sub>x</sub>)<sub>x</sub> = a<sub>x</sub>u<sub>x</sub> + au<sub>xx</sub>，不能只留下 au<sub>xx</sub>。</aside>
+        <p class="lead">微分方程说明内部怎样变化；初值和边界条件把具体问题补充完整。</p>
+      </div>
+    </section>
+
+    <section class="slide" id="slide-4">
+      <div class="slide-inner">
+        <p class="eyebrow">04 · 弱形式</p>
+        <h2>把二阶导数降为一阶</h2>
+        <div class="grid-2">
+          <div>
+            <p>P1 有限元使用相连的小线段或三角形平面。函数连续，但导数可以在单元边界跳变。</p>
+            <div class="formula">−∫ ∇·(a∇u)v = ∫ a∇u·∇v</div>
+            <p>测试函数在 Dirichlet 边界为零，边界项消失。弱形式不要求近似函数拥有处处存在的二阶导数。</p>
+          </div>
+          <div class="mesh-figure">
+            <svg viewBox="0 0 520 250" role="img" aria-label="两个一维单元与中间帽子函数">
+              <line x1="50" y1="190" x2="470" y2="190" stroke="#68736e" stroke-width="3"/>
+              <path d="M50 190 L260 48 L470 190" fill="none" stroke="#456b58" stroke-width="6"/>
+              <circle cx="50" cy="190" r="7" fill="#25312d"/>
+              <circle cx="260" cy="48" r="7" fill="#a45d3e"/>
+              <circle cx="470" cy="190" r="7" fill="#25312d"/>
+              <text x="35" y="224" fill="#25312d" font-size="18">x₀</text>
+              <text x="246" y="32" fill="#a45d3e" font-size="18">φ₁=1</text>
+              <text x="452" y="224" fill="#25312d" font-size="18">x₂</text>
+              <text x="198" y="225" fill="#68736e" font-size="17">两个单元，共享中间节点</text>
+            </svg>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide" id="slide-4a">
+      <div class="slide-inner">
+        <p class="eyebrow">05 · 网格、基函数与未知量</p>
+        <h2>一个单元不等于一个基函数</h2>
+        <div class="grid-2">
+          <div class="mesh-figure">
+            <svg viewBox="0 0 520 260" role="img" aria-label="一个一维 P1 单元上的两个节点基函数">
+              <line x1="55" y1="205" x2="465" y2="205" stroke="#68736e" stroke-width="3"/>
+              <path d="M55 55 L465 205" fill="none" stroke="#456b58" stroke-width="6"/>
+              <path d="M55 205 L465 55" fill="none" stroke="#a45d3e" stroke-width="6"/>
+              <circle cx="55" cy="205" r="7" fill="#25312d"/><circle cx="465" cy="205" r="7" fill="#25312d"/>
+              <text x="72" y="70" fill="#456b58" font-size="19">φ₁</text><text x="425" y="70" fill="#a45d3e" font-size="19">φ₂</text>
+              <text x="42" y="238" fill="#25312d" font-size="18">x₁</text><text x="452" y="238" fill="#25312d" font-size="18">x₂</text>
+            </svg>
+          </div>
+          <div>
+            <p>一维 P1 单元有两个节点，因此有两个标量基函数。每个基函数在自己的节点取 1，在另一个节点取 0。</p>
+            <div class="small-formula">u<sub>1h</sub> = U<sub>11</sub>φ₁ + U<sub>12</sub>φ₂</div>
+            <div class="small-formula">u<sub>2h</sub> = U<sub>21</sub>φ₁ + U<sub>22</sub>φ₂</div>
+            <p>两个物质 × 两个节点，未知量就是四个节点值：</p>
+            <div class="formula">U = [U<sub>11</sub>, U<sub>12</sub>, U<sub>21</sub>, U<sub>22</sub>]<sup>T</sup></div>
+          </div>
+        </div>
+        <aside class="mistake"><strong>易错提醒</strong>“只分了一个单元”不等于“只有一个基函数”。P1 线段单元有两个节点，也就有两个局部基函数。</aside>
+      </div>
+    </section>
+
+    <section class="slide" id="slide-5">
+      <div class="slide-inner">
+        <p class="eyebrow">06 · 空间离散</p>
+        <h2>每一项都成为一种矩阵</h2>
+        <div class="matrix-map" role="table" aria-label="CDR 各项与有限元矩阵的对应关系">
+          <div class="matrix-symbol">M</div><div>d u<sub>t</sub></div><div class="definition">∫ d φ<sub>j</sub> φ<sub>i</sub>，乘节点变化率 U̇</div>
+          <div class="matrix-symbol">K</div><div>−∇·(a∇u)</div><div class="definition">∫ a ∇φ<sub>j</sub>·∇φ<sub>i</sub></div>
+          <div class="matrix-symbol">B</div><div>b·∇u</div><div class="definition">∫ (b·∇φ<sub>j</sub>) φ<sub>i</sub></div>
+          <div class="matrix-symbol">R</div><div>cu</div><div class="definition">∫ c φ<sub>j</sub> φ<sub>i</sub></div>
+          <div class="matrix-symbol">F</div><div>f</div><div class="definition">∫ f φ<sub>i</sub></div>
+        </div>
+        <div class="formula">M U̇ + (K + B + R) U = F</div>
+        <p>空间变量已经通过积分进入矩阵条目，剩下的是节点值随时间变化的常微分方程组。</p>
+      </div>
+    </section>
+
+    <section class="slide" id="slide-6">
+      <div class="slide-inner">
+        <p class="eyebrow">07 · 时间推进</p>
+        <h2>由旧时刻求新时刻</h2>
+        <div class="grid-2">
+          <article class="panel">
+            <h3>后向欧拉（BE）</h3>
+            <p class="small-formula">U̇ⁿ⁺¹ ≈ (Uⁿ⁺¹ − Uⁿ) / Δt</p>
+            <p>只需要一个历史值，时间精度一阶。</p>
+          </article>
+          <article class="panel">
+            <h3>二阶后向差分公式（BDF2）</h3>
+            <p class="small-formula">U̇ⁿ⁺¹ ≈ (3Uⁿ⁺¹ − 4Uⁿ + Uⁿ⁻¹) / (2Δt)</p>
+            <p>使用两个历史值，时间精度二阶。</p>
+          </article>
+        </div>
+        <div class="flow" aria-label="项目时间推进顺序">
+          <div class="flow-step">初值 U⁰</div><div class="arrow">→</div>
+          <div class="flow-step">一次后向欧拉<br>得到 U¹</div><div class="arrow">→</div>
+          <div class="flow-step">BDF2<br>得到 U²、U³…</div>
+        </div>
+        <aside class="mistake"><strong>易错提醒</strong>BDF2 需要 Uⁿ 和 Uⁿ⁻¹ 两个历史值；刚开始只有 U⁰，所以第一步先用 BE 得到 U¹。</aside>
+      </div>
+    </section>
+
+    <section class="slide" id="slide-7">
+      <div class="slide-inner">
+        <p class="eyebrow">08 · 多分量耦合</p>
+        <h2>块行是方程，块列是未知量</h2>
+        <div class="grid-2">
+          <div>
+            <div class="formula">(Cu)<sub>r</sub> = Σ<sub>s</sub> C<sub>rs</sub>u<sub>s</sub></div>
+            <p>反应矩阵的第 <em>r</em> 行描述第 <em>r</em> 条方程；第 <em>s</em> 列描述影响来自第 <em>s</em> 个分量。</p>
+            <p>若有 <em>m</em> 个物质、每个物质有 <em>N</em> 个节点值，最终未知向量长度就是 <em>mN</em>。</p>
+          </div>
+          <div class="panel">
+            <h3>带数字的两分量反应</h3>
+            <p class="small-formula">C = [ 2 −1; −1 2 ]</p>
+            <p>设标量空间质量矩阵为 <em>S</em>，反应部分就扩展为：</p>
+            <p class="small-formula">R = [ 2S −S; −S 2S ]</p>
+            <p>第一块行同时含 U₁、U₂，因为第一种物质的变化受两种物质共同影响；两块方程必须一起求解。</p>
+          </div>
+        </div>
+        <aside class="mistake"><strong>易错提醒</strong>不能先独立求 U₁、再独立求 U₂。非对角反应块让两条方程同时含有两组未知量，因此必须拼成一个块方程组共同求解。</aside>
+      </div>
+    </section>
+
+    <section class="slide" id="slide-8">
+      <div class="slide-inner">
+        <p class="eyebrow">09 · 连续问题的适定性</p>
+        <h2>有解、唯一，并且不会对数据失控</h2>
+        <div class="grid-3">
+          <article class="panel"><h3>存在性</h3><p>给定合理的系数、初值、边界和源项，至少能找到一个满足弱形式的解。</p></article>
+          <article class="panel"><h3>唯一性</h3><p>同一组数据不会对应两个不同答案，数值求解才有明确目标。</p></article>
+          <article class="panel"><h3>连续依赖</h3><p>输入只有小变化时，解也只发生可控的小变化。</p></article>
+        </div>
+        <div class="formula">A(u,u) = ∫ a|∇u|² + ∫(c − ½∇·b)u²</div>
+        <p class="lead">正扩散提供核心控制；反应与速度散度还需满足合适条件。连续方程适定、离散矩阵条件数、强对流振荡是三个不同层面的问题。</p>
+      </div>
+    </section>
+
+    <section class="slide" id="slide-9">
+      <div class="slide-inner">
+        <p class="eyebrow">10 · 强对流</p>
+        <h2>方程有解，不代表粗网格没有振荡</h2>
+        <div class="result-row">
+          <div class="image-frame"><img src="成果数据/layer.png" alt="Galerkin 与 SUPG 的强对流边界层结果对比"></div>
+          <div>
+            <div class="formula">Pe = |b|h / (2a)</div>
+            <p>单元 Péclet 数比较一个网格单元内的对流与扩散。</p>
+            <p>本项目示例取 <em>a=0.001、|b|=1、h=1/32</em>，得到 <em>Pe=15.625&gt;1</em>，属于明显的对流占优。</p>
+            <p>真实解仍可单调变化，但普通 Galerkin（伽辽金）方法在粗网格上可能出现非物理锯齿。</p>
+            <p class="caption">稳定性与解析精度是两个问题：没有振荡，不等于薄边界层已经被网格充分解析。</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide" id="slide-9a">
+      <div class="slide-inner">
+        <p class="eyebrow">11 · SUPG 稳定化</p>
+        <p class="caption">SUPG：流线迎风彼得罗夫—伽辽金法</p>
+        <h2>沿流线方向增加残差检查</h2>
+        <div class="formula">Σ<sub>K</sub> ∫<sub>K</sub> τ (b·∇v<sub>h</sub>) R(u<sub>h</sub>)</div>
+        <p class="lead">只有离散解没有满足原方程时，残差项才会发挥作用；精确解代入时残差为零，所以它仍与原方程一致。</p>
+        <div class="grid-2">
+          <article class="panel">
+            <h3>直观效果</h3>
+            <div class="small-formula">a<sub>eff</sub> ≈ a + τ|b|²</div>
+            <p>沿水流方向增加适量数值耗散，使有效 Péclet 数降低，压住节点间来回摆动。</p>
+          </article>
+          <article class="panel">
+            <h3>它能做什么、不能做什么</h3>
+            <p>它能抑制非物理振荡；但不会增加网格自由度。若要准确看清很薄的边界层，仍需要足够细的网格。</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide" id="slide-10">
+      <div class="slide-inner">
+        <p class="eyebrow">12 · 数值验证</p>
+        <h2>有真解的算例，是给程序做体检</h2>
+        <div class="grid-2">
+          <div>
+            <div class="image-frame"><img src="成果数据/spatial.png" alt="空间误差与收敛阶"></div>
+            <p class="caption">平滑问题中，P1 接近 L² 二阶、梯度一阶；P2 接近 L² 三阶、梯度二阶。</p>
+          </div>
+          <div>
+            <div class="image-frame"><img src="成果数据/temporal.png" alt="时间误差与收敛阶"></div>
+            <p class="caption">后向欧拉（BE）约一阶，二阶后向差分公式（BDF2）约二阶。</p>
+          </div>
+        </div>
+        <div class="grid-3" style="margin-top:22px">
+          <div class="metric"><strong>残差</strong>组装后的线性方程是否解准确</div>
+          <div class="metric"><strong>制造解</strong>由任选真解反推源项，检查整条离散链</div>
+          <div class="metric"><strong>收敛阶</strong>网格或时间步缩小时误差怎样下降</div>
+        </div>
+        <aside class="mistake"><strong>易错提醒</strong>“残差很小”只说明组装后的线性系统解得准；它不能单独证明 PDE 离散正确。制造解和收敛阶负责检查更完整的实现链条。</aside>
+      </div>
+    </section>
+
+    <section class="slide" id="slide-10a">
+      <div class="slide-inner">
+        <p class="eyebrow">13 · 从数学到 FEALPy</p>
+        <h2>数学对象与程序对象一一对应</h2>
+        <div class="grid-2">
+          <div class="flow" style="flex-direction:column">
+            <div class="flow-step">PDE 数据：a、b、C、d、f</div>
+            <div class="flow-step">Mesh → LagrangeFESpace</div>
+            <div class="flow-step">积分器 → BilinearForm / LinearForm</div>
+            <div class="flow-step">BlockForm → DirichletBC → spsolve</div>
+          </div>
+          <pre><code>form.add_integrator(
+    ScalarDiffusionIntegrator(coef=a)
+)
+form.add_integrator(
+    ScalarConvectionIntegrator(coef=b)
+)
+form.add_integrator(
+    ScalarMassIntegrator(coef=C[i, j])
+)
+
+A = BlockForm(forms).assembly()</code></pre>
+        </div>
+        <p class="lead">程序阅读也沿着同一条线：先认出数学项，再找负责该项的有限元对象，最后看它怎样进入块矩阵和时间步。</p>
+      </div>
+    </section>
+
+    <section class="slide" id="slide-11">
+      <div class="slide-inner">
+        <p class="eyebrow">14 · 计算结果</p>
+        <h2>从节点向量回到可观察的场</h2>
+        <div class="result-row">
+          <div class="image-frame"><img src="成果数据/field.png" alt="双分量初值、终态和顶点误差"></div>
+          <div>
+            <p>求解器输出每个分量的节点值，并写入 VTU（VTK 非结构网格）文件；PVD（ParaView 数据集合）文件把多个时刻连接成时间序列。</p>
+            <p>ParaView 用于观察场的空间分布和时间演化。误差仍由有限元函数在积分点上计算，不能只凭颜色图判断。</p>
+            <div class="metric"><strong>21 帧</strong>项目提供从初值到终态的完整时间序列</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="slide closing" id="slide-12">
+      <div class="slide-inner">
+        <p class="eyebrow">结论</p>
+        <h2>同一条链条贯穿数学与程序</h2>
+        <p class="takeaway">局部收支给出方程，弱形式把它交给有限元；基函数生成矩阵，时间格式推进节点值，多分量通过块系统共同求解，稳定化与验证让结果真正可信。</p>
+        <div class="hero-rule"></div>
+        <div class="grid-3">
+          <div><h3>已经实现</h3><p>1–3 维、多个耦合分量、一次/二次有限元、后向欧拉/二阶后向差分、伽辽金/SUPG 稳定化。</p></div>
+          <div><h3>证据</h3><p>空间与时间收敛、强对流对比、边界与残差检查、VTU 读回。</p></div>
+          <div><h3>适用范围</h3><p>线性问题、正标量扩散与容量、盒形区域、全 Dirichlet 边界、均匀时间步。</p></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <nav class="controls" aria-label="幻灯片控制">
+    <button type="button" id="prev" aria-label="上一页">↑</button>
+    <button type="button" id="next" aria-label="下一页">↓</button>
+  </nav>
+
+  <script>
+    const slides = [...document.querySelectorAll('.slide')];
+    const progressBar = document.getElementById('progressBar');
+    const currentSlide = document.getElementById('currentSlide');
+    const totalSlides = document.getElementById('totalSlides');
+    let activeIndex = 0;
+
+    totalSlides.textContent = String(slides.length).padStart(2, '0');
+
+    function update(index) {
+      activeIndex = Math.max(0, Math.min(slides.length - 1, index));
+      currentSlide.textContent = String(activeIndex + 1).padStart(2, '0');
+      progressBar.style.width = `${((activeIndex + 1) / slides.length) * 100}%`;
+    }
+
+    function go(index) {
+      const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      slides[Math.max(0, Math.min(slides.length - 1, index))]
+        .scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block: 'start' });
+    }
+
+    document.getElementById('prev').addEventListener('click', () => go(activeIndex - 1));
+    document.getElementById('next').addEventListener('click', () => go(activeIndex + 1));
+
+    document.addEventListener('keydown', (event) => {
+      if (['ArrowDown', 'PageDown', 'ArrowRight', ' '].includes(event.key)) {
+        event.preventDefault();
+        go(activeIndex + 1);
+      }
+      if (['ArrowUp', 'PageUp', 'ArrowLeft'].includes(event.key)) {
+        event.preventDefault();
+        go(activeIndex - 1);
+      }
+      if (event.key === 'Home') { event.preventDefault(); go(0); }
+      if (event.key === 'End') { event.preventDefault(); go(slides.length - 1); }
+    });
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) update(slides.indexOf(entry.target));
+      });
+    }, { threshold: 0.58 });
+
+    slides.forEach((slide) => observer.observe(slide));
+    update(0);
+  </script>
+</body>
+</html>
