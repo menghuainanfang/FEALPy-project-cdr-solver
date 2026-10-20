@@ -57,7 +57,7 @@ FEALPy 的版本与接口要求见 [环境审查](docs/environment_audit.md)。�
 ## 最短运行
 
 ```powershell
-cd D:\桌面\科研工作库\移动网格
+cd D:\桌面\movingmesh\移动网格
 .\.venv\Scripts\python.exe -m pytest -q
 .\.venv\Scripts\python.exe -m experiments.e_variational_mesh_visual
 .\.venv\Scripts\python.exe -m experiments.f_poisson_mesh_comparison
