@@ -4,7 +4,43 @@
 
 本科毕业论文研究仓库，以 FEALPy 为主要计算平台。当前研究底座已经覆盖二维有向几何、一维等分布、固定网格 Poisson 制造解和现有 GFMMPDE 最小基线。
 
-正式题目保持不变；“二维做深、三维验证”和“固定度量下网格能量稳定优先”仍是待导师确认的工作假设。
+## 研究定位（2026-10-23 更新）
+
+**正式题目暂保持《高维鲁棒的能量稳定变分移动网格算法研究及其应用》。** 已明确的实际研究主线是：**以导师团队2026年的迹—对数变分移动网格论文为基础，面向三维四面体网格完成数值算法实现、验证与应用。** 基础论文为 Wang、Huang、Wei，[*A Trace–Logarithmic Variational Functional for Equidistribution and Alignment in Moving Mesh Adaptation*](https://arxiv.org/abs/2601.20235)。
+
+- **三维是最终核心任务**：围绕迹—对数泛函、四面体几何离散、单元与全局导数、边界处理、求解器及三维数值算例展开。
+- **二维是学习和核验基础**：用于理解原理、复现经典工作、检查公式和调试，不再把“二维做深、三维验证”作为课题定位。
+- **网格能量与鲁棒性是研究性质和评价对象**：区分连续、半离散、全离散结论；检查固定度量阶段的能量演化与单元正定向，但不再将“固定度量下网格能量稳定优先”设为独立选题假设。网格能量下降不等于物理 PDE 能量稳定。
+- **继承与新增贡献必须分清**：原论文部分理论已按一般维数建立；此前已有三维变分网格研究。最终成果重点在特定新泛函的三维可运行实现、数值验证及经证据支持的改进，不声称首次发明三维变分网格。
+- **开放问题**：具体时间离散改进、非线性求解优化、复杂三维应用与进一步理论证明，均须由复现结果和导师反馈逐步确定，不能预设研究结论。
+
+以上研究主线依据已沟通的导师任务范围；不代表导师已经逐项认可下面的实验或创新设想。
+
+## 长期学习与研究路线
+
+采用**基础理解 → 手算推导 → 小型可验证实验 → 经典论文复现 → 三维研究**的路径。时间是参考节奏，不是强制截止日期；进阶依据是可复述的理论、可核验的计算和原始证据。
+
+| 参考阶段 | 核心文献与问题 | 主要学习 / 验收产物 |
+| --- | --- | --- |
+| 2026.10–12 · 几何基础 | Huang 2006《Mathematical Principles》；联系已读 Huang–Kamenski 2015 | 理解 Jacobian、SVD、度量椭球、等分布与对齐；完成二维手算及基础实验 |
+| 2026.12–2027.02 · 变分与 MMPDE | Huang 2001《Variational Mesh Adaptation》；按需选读 Huang–Ren–Russell 1994 | 从 EA 条件理解泛函构造，推导简单梯度流并实现小型算例 |
+| 2027.02–04 · 度量与误差 | Huang 2005《Metric Tensors》；Huang–Sun 2003；Huang 2005《Measuring Mesh Qualities》 | 构造 Hessian 度量，比较插值误差、等分布及对齐指标 |
+| 2027.04–07 · 数值实现与基准 | Huang 2001《Practical Aspects》；Huang–Kamenski–Russell 2015 | 复现经典二维/三维基准中的可行部分，形成可重复程序、图表和误差/耗时记录 |
+| 2027.07–09 · 非退化性 | Huang–Kamenski 2018 | 列明定理假设，区分半离散证明与实际全离散算法；设计困难网格压力测试 |
+| 2027.10–12 · 新泛函与三维实现 | Wang–Huang–Wei 2026；FEALPy 对应代码 | 梳理已有三维支持与二维专用实现，核验四面体能量/梯度，推进完整三维路径 |
+| 2028.01–04 · 深化与收束 | 三维问题驱动补充阅读 | 完成三维数值应用、鲁棒性与成本比较，并整理毕业论文 |
+
+**当前阅读顺序：** 01 → 03 → 04（结合09、10）→ 05、07 → 16 → 导师2026年论文。已阅读的 Huang–Kamenski 2015 作为几何离散桥梁，按问题回看，不必从头重读。02 和 11 保留为背景与旁支选读，不要求近期通读。
+
+**近期小实验（计划，非已完成记录）：** F01 一维等分布；F02 度量椭圆与特征分解；F03 Jacobian/SVD 与 EA 条件；之后再做简单泛函下降、Hessian 度量、质量指标与经典复现。与现有仓库已实现的实验脚本分开管理，不能仅凭列入计划标记为已复现。
+
+**阶段里程碑：** 2027 年 6 月前可视进度整理一份用于夏令营的可选二维基准或小改进成果；不以此强迫三维工作提前。毕业阶段以三维任务为主线，成果和个人贡献均以实际测试及导师确认为准。
+
+## 进度与证据原则
+
+研究进度区分“已阅读 / 已独立推导 / 已编程核验 / 已复现 / 待验证”。**阅读过或程序能运行不等于算法已经被证明，也不等于创新成果。** 每次实验至少保存论文公式对应关系、代码提交、配置、环境、原始结果、失败情况和验收结论。本地交接可维护独立进度文件，以仓库中的可检验记录为准。
+
+下面保留的实验、误差和环境数字来自仓库已有记录；本次 README 更新**没有重新运行数值实验、修改 FEALPy 或验收三维代码**。
 
 ## 变分移动网格可视化
 
@@ -86,4 +122,7 @@ cd D:\桌面\movingmesh\移动网格
 - FEALPy: <https://github.com/weihuayi/fealpy>
 - Huang and Kamenski, *A geometric discretization and a simple implementation for variational mesh generation and adaptation*, 2015.
 - Huang and Kamenski, *On the mesh nonsingularity of the moving mesh PDE method*, 2018.
-- 项目规划依据：`docs/高维鲁棒能量稳定变分移动网格_研究主档.md`。
+- 导师团队2026年论文：Wang、Huang、Wei，[*A Trace–Logarithmic Variational Functional for Equidistribution and Alignment in Moving Mesh Adaptation*](https://arxiv.org/abs/2601.20235)。
+- Huang 2006，*Mathematical Principles of Anisotropic Mesh Adaptation*；Huang 2001，*Variational Mesh Adaptation: Isotropy and Equidistribution*。
+- Huang 2005，*Metric tensors for anisotropic mesh generation*；Huang、Kamenski、Russell 2015，*A comparative numerical study of meshing functionals for variational mesh adaptation*。
+- 历史项目主档：docs/高维鲁棒能量稳定变分移动网格_研究主档.md（旧阶段假设以本页2026-10-23更新为准；本次提交未同步修订该文件）。
