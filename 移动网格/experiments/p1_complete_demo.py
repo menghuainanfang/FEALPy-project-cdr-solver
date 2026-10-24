@@ -70,7 +70,6 @@ def main():
     cases = []
     for key, label, physical, metric, mode in (
             ("adaptive", "陡变带 · 切向边界", reference, band, "tangent"),
-            ("adaptive_fixed", "陡变带 · 固定边界", reference, band, "fixed"),
             ("smoothing", "扰动平滑", perturbed, identity, "tangent")):
         cases.append((key, label + " · 长时间", physical, metric, mode, args.long_cap, True, 2000,
                       "延长伪时间上限，观察残量、固定窗口和连续检查何时共同达标。"))

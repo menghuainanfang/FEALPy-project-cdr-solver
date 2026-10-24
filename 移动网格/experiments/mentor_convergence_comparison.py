@@ -17,7 +17,7 @@ from src.fealpy_mesh_evolution import solve
 from src.variational_mesh import band_metric
 
 ROOT = Path(__file__).resolve().parents[1]
-OUTPUT = ROOT / "results/mentor_2026-10-23/comparison"
+OUTPUT = ROOT / "results/mentor_2026-10-23/tangent_comparison"
 
 
 def main():
@@ -27,14 +27,14 @@ def main():
     bm.set_backend("numpy")
     OUTPUT.mkdir(parents=True, exist_ok=True)
     rows = []
-    fig, axes = plt.subplots(2, 3, figsize=(14, 8), constrained_layout=True)
+    fig, axes = plt.subplots(2, 2, figsize=(10, 8), constrained_layout=True)
     for n in (8, 16):
         mesh = TriangleMesh.from_box([0., 1., 0., 1.], nx=n, ny=n)
         reference, cells, boundary = np.asarray(mesh.node), np.asarray(mesh.cell), np.asarray(mesh.boundary_node_flag())
         for amplitude in (.05, .30):
             physical = reference.copy()
             physical[~boundary] += np.random.default_rng(42).uniform(-amplitude/n, amplitude/n, (sum(~boundary), 2))
-            for name, mode in (("smoothing", "tangent"), ("adaptive_fixed", "fixed"), ("adaptive", "tangent")):
+            for name, mode in (("smoothing", "tangent"), ("adaptive", "tangent")):
                 metric = (np.broadcast_to(np.eye(2), (len(cells), 2, 2)).copy() if name == "smoothing"
                           else band_metric(physical[cells].mean(axis=1)))
                 for rtol, atol in ((1e-4, 1e-6), (1e-6, 1e-8)):
@@ -74,12 +74,12 @@ def main():
                         rows.append(row)
                         print(key, row["stop_reason"], row["accepted_bdf_steps"], flush=True)
                         if amplitude == .30 and rtol == 1e-6 and policy == "convergence":
-                            col = ("smoothing", "adaptive_fixed", "adaptive").index(name)
+                            col = ("smoothing", "adaptive").index(name)
                             times = [t["pseudo_time"] for t in trace]
                             axes[0, col].semilogy(times, [max(t["scaled_residual_rms"], 1e-16) for t in trace], label=f"n={n}")
                             axes[1, col].plot(times, [t["energy"] for t in trace], label=f"n={n}")
                             axes[0, col].axhline(result["residual_threshold"], ls=":", alpha=.5)
-    for col, name in enumerate(("smoothing", "adaptive_fixed", "adaptive")):
+    for col, name in enumerate(("smoothing", "adaptive")):
         axes[0, col].set(title=name, xlabel="Mesh pseudo-time s", ylabel="Scaled residual RMS")
         axes[1, col].set(xlabel="Mesh pseudo-time s", ylabel="Frozen-metric energy")
         for ax in axes[:, col]:

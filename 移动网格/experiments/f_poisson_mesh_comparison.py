@@ -28,6 +28,16 @@ ROOT = Path(__file__).resolve().parents[1]
 LABELS = {"smooth": "光滑正弦解", "band": "弯曲陡变带", "peak": "局部高斯尖峰"}
 
 
+def write_viewer(result, output):
+    view = {**result, "rows": [r for r in result["rows"] if r["method"] != "adaptive_fixed"],
+            "datasets": {k: {**s, "variants": {name: v for name, v in s["variants"].items()
+                                              if name != "adaptive_fixed"}}
+                         for k, s in result["datasets"].items()}}
+    template = Path(__file__).with_name("poisson_viewer.html").read_text(encoding="utf-8")
+    (output / "f_poisson_comparison.html").write_text(template.replace(
+        "__PDE_DATA__", json.dumps(view, ensure_ascii=False, allow_nan=False)), encoding="utf-8")
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--levels", type=int, nargs="+", default=[8, 16, 32])
@@ -64,16 +74,9 @@ def main():
                                     metric_function=problem.metric)
             adaptation_seconds = perf_counter() - started
             adapted = np.asarray(adapted_run["frames"][-1]["physical"])
-            started = perf_counter()
-            fixed_run = move_mesh(uniform, uniform, cells, boundary, metric,
-                                  duration=args.duration, frames=2, boundary_mode="fixed",
-                                  metric_function=problem.metric)
-            fixed_seconds = perf_counter() - started
-            fixed = np.asarray(fixed_run["frames"][-1]["physical"])
             variants = {"uniform": (uniform, 0., None),
                         "perturbed": (perturbed, 0., None),
                         "smoothed": (smoothed, smoothing_seconds, smoothed_run),
-                        "adaptive_fixed": (fixed, fixed_seconds, fixed_run),
                         "adaptive": (adapted, adaptation_seconds, adapted_run)}
             key = f"{name}-{n}"
             datasets[key] = {"case": name, "n": n, "cells": cells.tolist(), "variants": {}}
@@ -129,7 +132,7 @@ def main():
                               "adaptive_l2": final["l2_error"], "ratio": final["l2_ratio_to_uniform"],
                               "adaptive_total_seconds": final["total_seconds"]}), flush=True)
     for name in LABELS:
-        for method in ("uniform", "perturbed", "smoothed", "adaptive_fixed", "adaptive"):
+        for method in ("uniform", "perturbed", "smoothed", "adaptive"):
             subset = sorted((r for r in rows if r["case"] == name and r["method"] == method), key=lambda r: r["n"])
             for i, row in enumerate(subset):
                 previous = subset[i-1] if i else None
@@ -157,8 +160,7 @@ def main():
         writer = csv.DictWriter(handle, fieldnames=list(rows[0]))
         writer.writeheader()
         writer.writerows(rows)
-    template = Path(__file__).with_name("poisson_viewer.html").read_text(encoding="utf-8")
-    (output / "f_poisson_comparison.html").write_text(template.replace("__PDE_DATA__", encoded), encoding="utf-8")
+    write_viewer(result, output)
     fig, axes = plt.subplots(3, 3, figsize=(13, 12), constrained_layout=True)
     finest = max(args.levels)
     for i, name in enumerate(LABELS):
@@ -174,7 +176,7 @@ def main():
             axes[i,j].set_aspect("equal")
             axes[i,j].set_title(f"{name} / {method}: cell L2 error")
             fig.colorbar(collection, ax=axes[i,j], shrink=.7)
-        for method in ("uniform", "perturbed", "smoothed", "adaptive_fixed", "adaptive"):
+        for method in ("uniform", "perturbed", "smoothed", "adaptive"):
             subset = sorted((r for r in rows if r["case"] == name and r["method"] == method), key=lambda r:r["n"])
             axes[i,2].loglog([r["dofs"] for r in subset], [r["l2_error"] for r in subset], "o-", label=method)
         axes[i,2].set(xlabel="P1 degrees of freedom", ylabel="L2 PDE solution error")

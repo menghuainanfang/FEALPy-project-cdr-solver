@@ -14,8 +14,9 @@ OUTPUT = ROOT / "results/mentor_2026-10-23/p1_v2/e"
 
 def main():
     result = json.loads((OUTPUT / "e_variational_mesh.json").read_text(encoding="utf-8"))
-    fig, axes = plt.subplots(3, 3, figsize=(14, 10), constrained_layout=True)
-    for i, (name, scene) in enumerate(result["scenes"].items()):
+    scenes = {k: s for k, s in result["scenes"].items() if s["boundary_mode"] == "tangent"}
+    fig, axes = plt.subplots(2, 3, figsize=(14, 7), constrained_layout=True)
+    for i, (name, scene) in enumerate(scenes.items()):
         trace = scene["convergence_trace"]
         with (OUTPUT / f"{name}_convergence_trace.csv").open("w", newline="", encoding="utf-8-sig") as f:
             flat = [{k: json.dumps(v, ensure_ascii=False) if isinstance(v, list) else v for k, v in row.items()} for row in trace]

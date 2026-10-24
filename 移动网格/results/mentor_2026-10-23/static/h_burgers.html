@@ -137,7 +137,7 @@
         check("主判据 · 网格残量",`${number(r.mesh_residual_rms)} / ${number(r.residual_threshold)}`,"", "mesh_residual_rms"),
         check("辅助 · 窗口相对位移",r.window_ready?`${number(r.displacement)} / ${number(r.displacement_threshold)}`:`等待固定窗口；阈值 ${number(r.displacement_threshold)}`,`max |Δxi|/h_ref；固定窗口Δs=${number(r.window_pseudo_time)}，窗口就绪=${r.window_ready===true?"是":"否"}。`),
         check("辅助 · 冻结能量变化率",r.window_ready?`${number(r.energy_change_rate)} / ${number(r.energy_rate_threshold)}`:`等待固定窗口；阈值 ${number(r.energy_rate_threshold)}`,`|ΔI|/max(|I_window|,I_scale)/(window/tau)；${r.window_ready?'本次参考能量规模='+number(r.energy_reference):'固定窗口尚未就绪'}。`),
-        check("硬约束 · 几何合法",geom,"检查两个网格的最小正有向面积、边界法向与角点；固定边界另检查切向位移。"),
+        check("硬约束 · 几何合法",geom,"检查两个网格的最小正有向面积、边界法向与角点。"),
         check("连续达标次数",`${r.consecutive_success??"未提供"} / ${r.required_successes??"未提供"}`,"仅在实际接受步检查；所有单次条件满足才累加，否则归零。"),
         check("当前接受检查",r.criterion_met===true?"网格判据已满足":r.criterion_met===false?"尚未满足网格判据":"旧记录：逐步判据未提供","数值成功不等于网格收敛；最终停止与当前检查分别显示。")
       );

@@ -30,6 +30,8 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def write_viewer(result, output):
+    result = {**result, "scenes": {name: scene for name, scene in result["scenes"].items()
+                                  if scene["boundary_mode"] == "tangent"}}
     encoded = json.dumps(result, ensure_ascii=False, allow_nan=False)
     template = Path(__file__).with_name("mesh_viewer.html").read_text(encoding="utf-8")
     (output / "e_variational_mesh.html").write_text(
@@ -80,7 +82,6 @@ def main():
     scenes = {}
     for name, physical, metric, mode in (
             ("smoothing", perturbed, identity, "tangent"),
-            ("adaptive_fixed", reference, band_metric(centers), "fixed"),
             ("adaptive", reference, band_metric(centers), "tangent")):
         metric_function = band_metric if name.startswith("adaptive") else None
         scenes[name] = solve(reference, physical, cells, boundary, metric,
@@ -110,7 +111,7 @@ def main():
     encoded = json.dumps(result, ensure_ascii=False, allow_nan=False)
     (output / "e_variational_mesh.json").write_text(encoded, encoding="utf-8")
     write_viewer(result, output)
-    fig, axes = plt.subplots(3, 3, figsize=(13, 12), constrained_layout=True)
+    fig, axes = plt.subplots(2, 3, figsize=(13, 8), constrained_layout=True)
     for row, (name, scene) in enumerate(scenes.items()):
         first, last = scene["frames"][0], scene["frames"][-1]
         for col, frame in enumerate((first, last)):

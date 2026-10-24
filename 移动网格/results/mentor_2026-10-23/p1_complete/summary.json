@@ -26,32 +26,6 @@
     "minimum_physical_area": 0.00076996561208623
   },
   {
-    "case": "adaptive_fixed",
-    "label": "陡变带 · 固定边界 · 长时间",
-    "cap": 20.0,
-    "stop_reason": "converged",
-    "terminal_s": 5.050315860324661,
-    "first_converged_s": 5.050315860324661,
-    "criterion_met": true,
-    "cap_reached": false,
-    "accepted_bdf_steps": 103,
-    "replay_frames": 104,
-    "minimum_physical_area": 0.0006979399826669641
-  },
-  {
-    "case": "adaptive_fixed_short",
-    "label": "陡变带 · 固定边界 · 短时截断",
-    "cap": 0.5,
-    "stop_reason": "pseudo_time_cap",
-    "terminal_s": 0.5,
-    "first_converged_s": null,
-    "criterion_met": false,
-    "cap_reached": true,
-    "accepted_bdf_steps": 61,
-    "replay_frames": 62,
-    "minimum_physical_area": 0.0007812271407552128
-  },
-  {
     "case": "smoothing",
     "label": "扰动平滑 · 长时间",
     "cap": 20.0,

@@ -18,7 +18,7 @@ from src.fealpy_mesh_evolution import Convergence, solve
 from src.variational_mesh import band_metric
 
 ROOT = Path(__file__).resolve().parents[1]
-OUTPUT = ROOT / "results/mentor_2026-10-23/p1_v2/matrix"
+OUTPUT = ROOT / "results/mentor_2026-10-23/p1_tangent/matrix"
 
 
 def problem(n, name, amplitude=.2):
@@ -27,13 +27,13 @@ def problem(n, name, amplitude=.2):
     physical = x.copy()
     physical[~b] += np.random.default_rng(42).uniform(-amplitude/n, amplitude/n, (sum(~b), 2))
     metric = np.broadcast_to(np.eye(2), (len(c), 2, 2)).copy() if name == "smoothing" else band_metric(physical[c].mean(axis=1))
-    return x, physical, c, b, metric, "fixed" if name == "adaptive_fixed" else "tangent"
+    return x, physical, c, b, metric, "tangent"
 
 
 def main():
     bm.set_backend("numpy")
     OUTPUT.mkdir(parents=True, exist_ok=True)
-    spec = importlib.util.spec_from_file_location("p1_legacy_matrix", OUTPUT.parent / "legacy_evolution.py")
+    spec = importlib.util.spec_from_file_location("p1_legacy_matrix", ROOT / "results/mentor_2026-10-23/p1_v2/legacy_evolution.py")
     legacy = importlib.util.module_from_spec(spec)
     sys.modules[spec.name] = legacy
     spec.loader.exec_module(legacy)
@@ -87,7 +87,7 @@ def main():
         return result
 
     for n in (8, 16):
-        for scene in ("smoothing", "adaptive_fixed", "adaptive"):
+        for scene in ("smoothing", "adaptive"):
             for cap in (.5, 3., 5.):
                 for rtol, atol in ((1e-4, 1e-6), (1e-6, 1e-8)):
                     run_case(n, scene, cap, rtol, atol)

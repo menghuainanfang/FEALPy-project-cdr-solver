@@ -46,12 +46,13 @@ test('modern trace uses recorded facts and guide never creates a convergence eve
 
 test('complete library replays the exact accepted meshes and contains distinct real outcomes',()=>{
   const data=read('results/mentor_2026-10-23/p1_complete/e_variational_mesh.json');
-  assert.equal(Object.keys(data.scenes).length,10);
+  assert.equal(Object.keys(data.scenes).length,8);
   const numeric=['mesh_residual_rms','residual_threshold','displacement_threshold',
     'energy_rate_threshold','consecutive_success','required_successes','nfev','njev','nlu'];
   for(const scene of Object.values(data.scenes)){
     const model=api.normalizeScene(scene);
     assert.equal(model.modern,true);
+    assert.equal(scene.boundary_mode,'tangent');
     assert.equal(scene.frames.length,scene.convergence_trace.length);
     assert.equal(scene.frames.length,scene.solver_stats.accepted_bdf_steps+1);
     scene.frames.forEach((f,j)=>{
@@ -77,7 +78,7 @@ test('complete library replays the exact accepted meshes and contains distinct r
     });
     for(const i of api.guideIndices(model))assert.equal(scene.frames[i].pseudo_time,model.trace[i].mesh_pseudo_time);
   }
-  for(const key of ['adaptive','adaptive_fixed','smoothing']){
+  for(const key of ['adaptive','smoothing']){
     assert.equal(data.scenes[key].stop_reason,'converged');
     assert.equal(data.scenes[key+'_short'].criterion_met,false);
     assert.equal(data.scenes[key+'_short'].cap_reached,true);
@@ -90,4 +91,21 @@ test('complete library replays the exact accepted meshes and contains distinct r
   assert.ok(data.scenes.smoothing_continue.first_converged_s<data.scenes.smoothing_continue.terminal_pseudo_time);
   assert.equal(data.scenes.adaptive_budget.stop_reason,'max_accepted_steps');
   assert.equal(data.scenes.adaptive_budget.cap_reached,false);
+});
+
+test('all current E and Poisson pages expose only tangential moving cases',()=>{
+  for(const file of ['results/e_variational_mesh.html',
+    'results/mentor_2026-10-23/e_convergence/e_variational_mesh.html',
+    'results/mentor_2026-10-23/p1_v2/e/e_variational_mesh.html',
+    'results/mentor_2026-10-23/p1_complete/e_variational_mesh.html']){
+    const html=fs.readFileSync(path.join(root,file),'utf8');
+    const data=JSON.parse(html.match(/<script id="data" type="application\/json">([\s\S]*?)<\/script>/)[1]);
+    assert.ok(Object.values(data.scenes).every(s=>s.boundary_mode==='tangent'));
+    assert.ok(!html.includes('value="adaptive_fixed"'));
+  }
+  const html=fs.readFileSync(path.join(root,'results/f_poisson_comparison.html'),'utf8');
+  const data=JSON.parse(html.match(/<script id="data" type="application\/json">([\s\S]*?)<\/script>/)[1]);
+  assert.ok(data.rows.every(r=>r.method!=='adaptive_fixed'));
+  assert.ok(Object.values(data.datasets).every(s=>!('adaptive_fixed' in s.variants)));
+  assert.ok(!html.includes('自适应·固定边界'));
 });

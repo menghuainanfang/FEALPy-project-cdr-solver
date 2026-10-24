@@ -5,12 +5,14 @@ import os
 from pathlib import Path
 
 from experiments.e_variational_mesh_visual import write_viewer
+from experiments.f_poisson_mesh_comparison import write_viewer as write_poisson_viewer
 from src.mesh_trace import render_diagnostic_assets
 
 ROOT = Path(__file__).resolve().parents[1]
 
 
 def main():
+    write_poisson_viewer(json.loads((ROOT / "results/f_poisson_comparison.json").read_text(encoding="utf-8")), ROOT / "results")
     for relative in ("results", "results/mentor_2026-10-23/e_convergence", "results/mentor_2026-10-23/p1_v2/e",
                      "results/mentor_2026-10-23/p1_complete"):
         folder = ROOT / relative
