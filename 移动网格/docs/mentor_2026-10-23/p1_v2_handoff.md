@@ -110,7 +110,7 @@ node --test tests/mesh_diagnostics_view.test.cjs
 ```
 
 Node未在PATH时使用本机已核验的 `C:/Users/10251/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/bin/node.exe`；静态检查可通过`--node`指定。
-阶段提交：cb46086为旧输出与计数审计，a52371b为独立监控器、66组对照与契约；共用面板和完整交接在随后提交。
+阶段提交：cb46086为旧输出与计数审计，a52371b为独立监控器、66组对照与契约，48e12ac为共用面板与交接文档。2026-10-24最终核对：3项Node测试与10个页面静态检查通过；数值验收采用上列39项Python测试与已保存的66组对照结果。
 原版E/H数值JSON保留；HTML采用可读取历史JSON的共用解释面板。P2可直接复用MeshConvergenceMonitor与convergence_trace，PDE状态与外层一致性仍分别管理。
 
 ## 限制
