@@ -124,7 +124,7 @@ def solve_step(nodes, cells, old_values, time, dt, data=BurgersData(), *, tolera
 
 def run(*, n=8, steps=3, dt=.02, inner_cap=3., max_outer=6, moving=True,
         static=False, perturbation=0., data=BurgersData(), save_inner_steps=None,
-        inner_frames=8, on_step=None):
+        inner_frames=8, on_step=None, stop_on_outer_cap=False):
     """Alternate PDE/metric/mesh at t_(n+1); transfer from the fixed t_n state.
 
     Each middle iteration solves the same physical step, rather than advancing
@@ -231,6 +231,8 @@ def run(*, n=8, steps=3, dt=.02, inner_cap=3., max_outer=6, moving=True,
                           overall_success=bool(static or not moving or iterations[-1]["outer_converged"]))
         if on_step:
             on_step(states[-1])
+        if stop_on_outer_cap and moving and not static and not iterations[-1]["outer_converged"]:
+            break
     return {"config": {"n": n, "steps": steps, "physical_dt": dt, "inner_pseudo_time_cap": inner_cap,
                         "max_outer": max_outer, "moving": moving, "static": static,
                         "perturbation": perturbation, "nu": data.nu, "constant_solution": data.constant},

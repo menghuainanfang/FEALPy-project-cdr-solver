@@ -1,0 +1,3 @@
+﻿n,time,dt,k_actual,outer_status,outer_residual,outer_tol,pde_status,pde_residual,pde_l2_error,accepted_bdf_steps,inner_all_converged,minimum_area,transfer_mass_change,target_rmse,fixed_target_rmse
+0,0.0,0.0,0,not_applicable,,1.0,not_applicable,,,0,,0.0036360563533018126,,0.12557935348620813,0.1294169580973016
+0,0.0,0.0,19,converged,0.49261207826845066,1.0,not_applicable,,,994,True,0.0023639805207940736,,0.049002490950841075,0.1294169580973016

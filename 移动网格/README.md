@@ -87,3 +87,11 @@ cd D:\桌面\movingmesh\移动网格
 - Huang and Kamenski, *A geometric discretization and a simple implementation for variational mesh generation and adaptation*, 2015.
 - Huang and Kamenski, *On the mesh nonsingularity of the moving mesh PDE method*, 2018.
 - 项目规划依据：`docs/高维鲁棒能量稳定变分移动网格_研究主档.md`。
+
+## 网格优化与长物理时间演示
+
+- [切向移动：内外迭代全流程](results/mentor_2026-10-23/optimization_flow/index.html)：每轮全部接受状态、物理映射、能量变化、对齐与等分布、收敛阈值。
+- [网格随时间演化：三重循环](results/mentor_2026-10-23/p2_v2/index.html)：60步数值Burgers与100步解析移动界面，故事模式和按需展开的算法模式。
+- [P2实验、误差、性能与重跑](docs/mentor_2026-10-23/three_loop_time_demo_v2.md)、[三分钟演示讲稿](docs/mentor_2026-10-23/mentor_walkthrough_v2.md)。
+
+本地HTTP预览：`.\.venv\Scripts\python.exe -m tools.preview_demos`，打开 `http://localhost:8765/demos/index.html`。

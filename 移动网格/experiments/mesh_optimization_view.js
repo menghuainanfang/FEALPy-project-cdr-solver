@@ -72,11 +72,11 @@
     mesh('physical',view.mesh.physical,r.input_physical);
     el('residual').textContent=`内层残量 ${scientific(d.mesh_residual_rms)} / 阈值 ${scientific(d.residual_threshold)}`;
     el('inner-check').textContent=d.criterion_met?'内层已收敛':`内层连续达标 ${d.consecutive_success} / ${d.required_successes}`;
-    el('energy-value').textContent=`能量 ${view.mesh.energy.toFixed(6)} · 本轮变化 ${((view.mesh.energy/r.inner.accepted_step_trace[0].energy-1)*100).toFixed(3)}%`;
+    el('energy-value').textContent=`能量 ${view.mesh.energy.toFixed(6)} · 本轮 ΔI=${scientific(view.mesh.energy-r.inner.accepted_step_trace[0].energy)} · 相对变化 ${scientific(view.mesh.energy_relative_change)}`;
     el('quality-value').textContent=`对齐 RMS ${view.mesh.alignment_rms.toFixed(4)} · 等分布 RMS ${view.mesh.equidistribution_rms.toFixed(4)}（理想值 1）`;
     const ratios=[['残量',d.mesh_residual_rms,d.residual_threshold],['窗口位移',d.displacement,d.displacement_threshold],['能量变化率',d.energy_change_rate,d.energy_rate_threshold]];
     el('thresholds').replaceChildren();for(const [label,value,tol] of ratios){const p=document.createElement('p');p.textContent=value==null?label+'：等待固定窗口':`${label} ${scientific(value)} / ${scientific(tol)} · ${value<=tol?'通过':'尚未通过'}`;const bar=document.createElement('meter');bar.min=0;bar.max=2;bar.low=0;bar.high=1;bar.optimum=0;bar.value=value==null?0:Math.min(2,value/tol);bar.title='指标/阈值，≤1通过；超过2按2显示';p.append(bar);el('thresholds').append(p);}
-    if(el('quantitative').open){plot('energy-curve',r.inner.accepted_step_trace,['energy'],['#087b69']);plot('quality-curve',r.inner.accepted_step_trace,['alignment_rms','equidistribution_rms'],['#57718a','#bb7a27'],1);}
+    if(el('quantitative').open){plot('energy-curve',r.inner.accepted_step_trace,['energy_relative_change'],['#087b69'],0);plot('quality-curve',r.inner.accepted_step_trace,['alignment_rms','equidistribution_rms'],['#57718a','#bb7a27'],1);}
     el('outer-check').textContent=event.phase==='check'?`外层网格变化 ${scientific(r.mesh_change)} · 度量变化 ${scientific(r.metric_change)} · 连续 ${r.consecutive_success} / ${cfg.consecutive_rounds}`:'外层判定在本轮映射完成后进行';
     const q=view.mesh.computational[tracked],x=view.mesh.physical[tracked];
     el('mapping-point').textContent=`同一顶点 ${tracked}：计算坐标 (${q.map(v=>v.toFixed(4)).join(', ')}) → 物理坐标 (${x.map(v=>v.toFixed(4)).join(', ')})。点击网格可更换跟踪点。`;

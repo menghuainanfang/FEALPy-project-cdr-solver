@@ -1,0 +1,5 @@
+{
+  "error": "Outer coupling was not fully checked or did not converge; saved states retain the actual stop status",
+  "completed_states": 2,
+  "wall_seconds": 1.5761544000124559
+}

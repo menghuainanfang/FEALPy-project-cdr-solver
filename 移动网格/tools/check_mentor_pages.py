@@ -18,7 +18,8 @@ PAGES = ["index.html", "demos/index.html", "results/e_variational_mesh.html",
          "results/mentor_2026-10-23/p1_v2/h_preview/h_burgers.html",
          "results/mentor_2026-10-23/p1_v2/static/h_burgers.html",
          "results/mentor_2026-10-23/p1_complete/e_variational_mesh.html",
-         "results/mentor_2026-10-23/optimization_flow/index.html"]
+         "results/mentor_2026-10-23/optimization_flow/index.html",
+         "results/mentor_2026-10-23/p2_v2/index.html"]
 
 
 class Page(HTMLParser):
@@ -63,6 +64,8 @@ def main():
             raise AssertionError(f"Unresolved template token: {relative}")
         if "__FLOW_SCRIPT__" in source or "__FLOW_DATA__" in source:
             raise AssertionError(f"Unresolved flow template token: {relative}")
+        if "__TIME_SCRIPT__" in source or "__TIME_DATA__" in source:
+            raise AssertionError(f"Unresolved time template token: {relative}")
         referenced_ids = set(re.findall(r"\bel\(['\"]([^'\"]+)['\"]\)", source))
         if referenced_ids-page.ids:
             raise AssertionError(f"Missing UI element IDs: {relative}: {sorted(referenced_ids-page.ids)}")

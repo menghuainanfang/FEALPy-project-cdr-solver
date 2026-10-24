@@ -1,0 +1,222 @@
+{
+  "runs": [
+    {
+      "run": "analytic_n6_steps10_dt0.02",
+      "wall_seconds": 25.68740059999982,
+      "raw_bytes": 19061153,
+      "rejected_bdf_attempts": null,
+      "max_inner_steps": 125,
+      "dataset_bytes": 11080748,
+      "actual_physical_steps": 10,
+      "all_outer_converged": true,
+      "continuity_max_difference": 0.0,
+      "minimum_physical_area": 0.0043110228130331975,
+      "max_outer_iterations": 18,
+      "all_pde_converged": null,
+      "validation_role": "measured_run"
+    },
+    {
+      "run": "analytic_n8_steps100_dt0.02",
+      "wall_seconds": 324.0640604000073,
+      "compressed_state_bytes": 35682400,
+      "raw_bytes": 163972182,
+      "rejected_bdf_attempts": null,
+      "max_inner_steps": 138,
+      "dataset_bytes": 85728176,
+      "actual_physical_steps": 100,
+      "all_outer_converged": true,
+      "continuity_max_difference": 0.0,
+      "minimum_physical_area": 0.002359196595261498,
+      "max_outer_iterations": 19,
+      "all_pde_converged": null,
+      "validation_role": "measured_run"
+    },
+    {
+      "run": "analytic_n8_steps30_dt0.02",
+      "wall_seconds": 126.54755469999509,
+      "compressed_state_bytes": 14856952,
+      "raw_bytes": 60835199,
+      "rejected_bdf_attempts": null,
+      "max_inner_steps": 138,
+      "dataset_bytes": 36560559,
+      "actual_physical_steps": 30,
+      "all_outer_converged": true,
+      "continuity_max_difference": 0.0,
+      "minimum_physical_area": 0.002359196595261498,
+      "max_outer_iterations": 19,
+      "all_pde_converged": null,
+      "validation_role": "measured_run"
+    },
+    {
+      "run": "analytic_n8_steps60_dt0.02",
+      "wall_seconds": 233.4936524000368,
+      "compressed_state_bytes": 23842167,
+      "raw_bytes": 105804643,
+      "rejected_bdf_attempts": null,
+      "max_inner_steps": 138,
+      "dataset_bytes": 57715777,
+      "actual_physical_steps": 60,
+      "all_outer_converged": true,
+      "continuity_max_difference": 0.0,
+      "minimum_physical_area": 0.002359196595261498,
+      "max_outer_iterations": 19,
+      "all_pde_converged": null,
+      "validation_role": "measured_run"
+    },
+    {
+      "run": "burgers_n12_steps30_dt0.01",
+      "wall_seconds": 66.49640219996218,
+      "compressed_state_bytes": 8521488,
+      "raw_bytes": 27790743,
+      "rejected_bdf_attempts": null,
+      "max_inner_steps": 116,
+      "dataset_bytes": 19445552,
+      "actual_physical_steps": 30,
+      "all_outer_converged": true,
+      "continuity_max_difference": 0.0,
+      "minimum_physical_area": 0.0018447839914799038,
+      "max_outer_iterations": 4,
+      "all_pde_converged": true,
+      "validation_role": "measured_run"
+    },
+    {
+      "run": "burgers_n6_steps10_dt0.02",
+      "wall_seconds": 13.460198100015987,
+      "raw_bytes": 6357994,
+      "rejected_bdf_attempts": null,
+      "max_inner_steps": 106,
+      "dataset_bytes": 3451812,
+      "actual_physical_steps": 10,
+      "all_outer_converged": true,
+      "continuity_max_difference": 0.0,
+      "minimum_physical_area": 0.007203398075467918,
+      "max_outer_iterations": 5,
+      "all_pde_converged": true,
+      "validation_role": "measured_run"
+    },
+    {
+      "run": "burgers_n8_steps30_dt0.02",
+      "wall_seconds": 57.139271199994255,
+      "compressed_state_bytes": 5006740,
+      "raw_bytes": 19351552,
+      "rejected_bdf_attempts": null,
+      "max_inner_steps": 110,
+      "dataset_bytes": 11211217,
+      "actual_physical_steps": 30,
+      "all_outer_converged": true,
+      "continuity_max_difference": 0.0,
+      "minimum_physical_area": 0.0036360563533018126,
+      "max_outer_iterations": 5,
+      "all_pde_converged": true,
+      "validation_role": "measured_run"
+    },
+    {
+      "run": "burgers_n8_steps60_dt0.02",
+      "wall_seconds": 103.81748119997792,
+      "compressed_state_bytes": 7847131,
+      "raw_bytes": 31528730,
+      "rejected_bdf_attempts": null,
+      "max_inner_steps": 110,
+      "dataset_bytes": 17128064,
+      "actual_physical_steps": 60,
+      "all_outer_converged": true,
+      "continuity_max_difference": 0.0,
+      "minimum_physical_area": 0.0036360563533018126,
+      "max_outer_iterations": 5,
+      "all_pde_converged": true,
+      "validation_role": "measured_run"
+    },
+    {
+      "run": "static_n8_steps0_dt0.02",
+      "wall_seconds": 7.797121900017373,
+      "compressed_state_bytes": 2764348,
+      "raw_bytes": 8687096,
+      "rejected_bdf_attempts": null,
+      "max_inner_steps": 138,
+      "dataset_bytes": 7084118,
+      "actual_physical_steps": 0,
+      "all_outer_converged": true,
+      "continuity_max_difference": 0.0,
+      "minimum_physical_area": 0.0023639805207940736,
+      "max_outer_iterations": 19,
+      "all_pde_converged": null,
+      "validation_role": "measured_run"
+    },
+    {
+      "wall_seconds": 1.5524329000036232,
+      "compressed_state_bytes": 89683,
+      "raw_bytes": 386536,
+      "rejected_bdf_attempts": null,
+      "max_inner_steps": 96,
+      "dataset_bytes": 245322,
+      "actual_physical_steps": 1,
+      "all_outer_converged": false,
+      "run": "burgers_n4_steps10_dt0.02_outer1",
+      "continuity_max_difference": 0.0,
+      "validation_role": "controlled_budget_exit",
+      "minimum_physical_area": 0.018367275170167265,
+      "max_outer_iterations": 1,
+      "all_pde_converged": true
+    }
+  ],
+  "coupled_refinement_at_t02": [
+    {
+      "n": 12,
+      "dt": 0.01,
+      "time": 0.2,
+      "moving_l2": 0.01931880825124237,
+      "fixed_l2": 0.00817936479351237,
+      "pde_residual": 6.333231121244062e-11
+    },
+    {
+      "n": 6,
+      "dt": 0.02,
+      "time": 0.2,
+      "moving_l2": 0.05829990951467441,
+      "fixed_l2": 0.030114439705198028,
+      "pde_residual": 1.2247192762592098e-10
+    },
+    {
+      "n": 8,
+      "dt": 0.02,
+      "time": 0.2,
+      "moving_l2": 0.03583526285623991,
+      "fixed_l2": 0.017311869894450417,
+      "pde_residual": 1.4643367057279436e-10
+    }
+  ],
+  "fixed_mesh_temporal": [
+    {
+      "n": 8,
+      "steps": 10,
+      "dt": 0.02,
+      "time": 0.2,
+      "l2_error": 0.017311869894450417,
+      "pde_residual": 1.8541919789143418e-10
+    },
+    {
+      "n": 8,
+      "steps": 20,
+      "dt": 0.01,
+      "time": 0.2,
+      "l2_error": 0.017148634603079742,
+      "pde_residual": 7.150836741446864e-11
+    },
+    {
+      "n": 8,
+      "steps": 40,
+      "dt": 0.005,
+      "time": 0.2,
+      "l2_error": 0.017072590941036702,
+      "pde_residual": 9.986584838157218e-11
+    }
+  ],
+  "temporal_self_differences": [
+    0.00584593108672487,
+    0.002988003280804586
+  ],
+  "temporal_self_difference_ratio": 1.9564674256819168,
+  "failure_records": [
+    "burgers_n4_steps10_dt0.02_outer1\\failure.json"
+  ]
+}

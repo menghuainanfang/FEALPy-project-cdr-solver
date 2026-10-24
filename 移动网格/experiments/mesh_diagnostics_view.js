@@ -129,7 +129,8 @@
         check("当前接受检查",r.criterion_met===true?"网格判据已满足":r.criterion_met===false?"尚未满足网格判据":"旧记录：逐步判据未提供","数值成功不等于网格收敛；最终停止与当前检查分别显示。")
       );
       const terminal=model.trace.at(-1), scene=model.scene;
-      find(".outcome").textContent=`当前判据说明：${r.unmet_reasons?.length?r.unmet_reasons.join("；"):"无未达条件，当前完整判据已满足"}\n${model.modern?"本次最终停止":"历史输出的最终停止"}：${scene.stop_reason}；积分器=${scene.solver_status??"历史记录未分层"}；网格=${scene.mesh_status??"历史记录未分层"}；criterion_met=${scene.criterion_met??"未提供"}；cap_reached=${scene.cap_reached??"未提供"}。\n首次完整收敛检查 s=${terminal.first_converged_s==null?(model.modern?"本次未达到":"旧记录未提供"):terminal.first_converged_s.toFixed(6)}。`;
+      const finalExplanation=scene.criterion_met?(scene.cap_reached?(terminal.first_converged_s===terminal.mesh_pseudo_time?"在伪时间上限处满足完整阈值":"已先达标并继续至伪时间上限"):"在伪时间上限前满足完整判据"):(scene.cap_reached?"到伪时间上限仍未满足完整判据":scene.stop_reason);
+      find(".outcome").textContent=`当前判据说明：${r.unmet_reasons?.length?r.unmet_reasons.join("；"):"无未达条件，当前完整判据已满足"}\n${model.modern?"本次最终停止":"历史输出的最终停止"}：${finalExplanation}（${scene.stop_reason}）；积分器=${scene.solver_status??"历史记录未分层"}；网格=${scene.mesh_status??"历史记录未分层"}；criterion_met=${scene.criterion_met??"未提供"}；cap_reached=${scene.cap_reached??"未提供"}。\n最终 s=${terminal.mesh_pseudo_time.toFixed(6)}；伪时间预算=${scene.pseudo_time_cap}。\n首次完整收敛检查 s=${terminal.first_converged_s==null?(model.modern?"本次未达到":"旧记录未提供"):terminal.first_converged_s.toFixed(6)}。`;
       const body=find("tbody");body.replaceChildren();
       for(const [key,value] of counterRows(model,r,position.display_frame_index)){if(key==='rejected_bdf_attempts')continue;const tr=document.createElement("tr"),name=document.createElement("th"),v=document.createElement("td");name.textContent=definitions[key].label;name.append(help(key));v.textContent=value;tr.append(name,v);body.append(tr);}
       [...find('.guide').children].forEach((b,i)=>b.textContent=guideLabels(model)[i]);

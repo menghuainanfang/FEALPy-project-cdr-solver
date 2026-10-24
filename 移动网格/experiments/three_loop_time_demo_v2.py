@@ -49,8 +49,16 @@ def render_site():
     models={}
     for path in paths:
         data=json.loads(path.read_text(encoding="utf-8"))
+        if path.with_name("failure.json").exists():continue
         key=f"{data['scenario']}_n{data['config']['n']}_dt{data['config']['physical_dt']}"
-        if key not in models or len(data["states"])>len(models[key]["states"]):models[key]=data
+        def score(record):return (len(record["states"]),record["config"].get("save_inner_traces")=="all",record["config"].get("save_inner_traces")=="key")
+        if key not in models or score(data)>score(models[key]):models[key]=data
+    preferred={}
+    for key,data in models.items():
+        score=(data["config"]["n"]==8 and data["config"]["physical_dt"] in (0.,.02),len(data["states"]))
+        scenario=data["scenario"]
+        if scenario not in preferred or score>preferred[scenario][0]:preferred[scenario]=(score,key)
+    models={key:models[key] for _,key in preferred.values()}
     template=(ROOT/"experiments/time_evolution_viewer.html").read_text(encoding="utf-8")
     script=(ROOT/"experiments/time_evolution_view.js").read_text(encoding="utf-8")
     for model in models.values():
@@ -84,6 +92,9 @@ def main():
     if args.render_only:render_site();return
     if not 2<=args.nx<=32 or args.dt_physical<=0:parser.error("2<=nx<=32 and dt-physical>0 required")
     name=f"{args.scenario}_n{args.nx}_steps{0 if args.scenario=='static' else args.physical_steps}_dt{args.dt_physical}"
+    if args.inner_cap is not None:name+=f"_cap{args.inner_cap}"
+    if args.max_outer is not None:name+=f"_outer{args.max_outer}"
+    if args.save_inner_traces!="key":name+="_traces"+args.save_inner_traces
     folder=OUTPUT/name;(folder/"steps").mkdir(parents=True,exist_ok=True)
     rows=[];bytes_written=0;raw_bytes=0;start=perf_counter()
     def save_step(state):
@@ -110,13 +121,15 @@ def main():
                      inner_cap=args.inner_cap or (10. if args.scenario=="burgers" else 40.),
                      max_outer=args.max_outer or (8 if args.scenario=="burgers" else 30),on_step=save_step)
         if args.scenario=="burgers":
-            result=burgers(**options,perturbation=.2,inner_frames=2,
+            result=burgers(**options,perturbation=.2,inner_frames=2,stop_on_outer_cap=True,
                            save_inner_steps=None if args.save_inner_traces=="all" else KEY_STEPS if args.save_inner_traces=="key" else set())
             baseline=burgers(n=args.nx,steps=args.physical_steps,dt=args.dt_physical,moving=False,perturbation=.2)
             result["fixed_grid_baseline"]=[{"physical_time":s["physical_time"],"nodes":s["nodes"],"values":s["values"],"pde":s.get("pde")} for s in baseline["states"]]
             for row,s in zip(rows,baseline["states"]):row["fixed_pde_l2_error"]=s.get("pde",{}).get("l2_error")
         else:
             result=analytic(**options,static=args.scenario=="static",save_inner=args.save_inner_traces)
+        result["config"].update(seed=42,inner_output_frames=2,save_inner_traces=args.save_inner_traces,
+                                 saved_coordinate_steps=[s["physical_step_index"] for s in result["states"] if s["outer_iterations"] and "physical" in s["outer_iterations"][0]["mesh_inner"]["accepted_step_trace"][0]])
         result["states"]=[pack_state(s) for s in result["states"]]
         result.update(scenario=args.scenario,schema_version="three-loop-time-v2",field_dictionary=FIELD_DICTIONARY,
                       provenance={"created_at":datetime.now().astimezone().isoformat(),"project":git_state(ROOT),
@@ -127,6 +140,9 @@ def main():
         encoded=json.dumps(result,ensure_ascii=False,allow_nan=False)
         (folder/"dataset.json").write_text(encoded,encoding="utf-8")
         (folder/"performance.json").write_text(json.dumps({**result["performance"],"dataset_bytes":len(encoded.encode("utf-8")),"actual_physical_steps":max(s["physical_step_index"] for s in result["states"]),"all_outer_converged":all(s["outer_converged"] for s in result["states"][1:])},indent=2),encoding="utf-8")
+        if not all(s["outer_converged"] for s in result["states"][1:]):
+            raise RuntimeError("Outer coupling was not fully checked or did not converge; saved states retain the actual stop status")
+        (folder/"failure.json").unlink(missing_ok=True)
     except Exception as error:
         (folder/"failure.json").write_text(json.dumps({"error":str(error),"completed_states":len(rows),"wall_seconds":perf_counter()-start},ensure_ascii=False,indent=2),encoding="utf-8")
         raise

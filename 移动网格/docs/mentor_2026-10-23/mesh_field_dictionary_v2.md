@@ -1,6 +1,6 @@
 # 网格诊断字段词典
 
-版本：`mesh-fields-v2.0`。定义源为 `src/mesh_field_dictionary.json`；E/H面板问号使用同一份定义。
+版本：`mesh-fields-v2.1`。定义源为 `src/mesh_field_dictionary.json`；E/H面板问号使用同一份定义。
 
 物理时间步n与耦合轮次k从1计数；BDF初始状态j=0；保存帧索引从0计数，界面显示索引+1。
 
@@ -27,3 +27,11 @@ iteration/step/gradient_norm仅指本项目归档的FEALPy E JSON；其他算法
 |velocity_norm|投影伪时间速度范数|计算坐标/网格伪时间|自由标量分量的欧氏范数，含tau与节点平衡缩放；不能单独据此称能量极小。|gradient_norm|
 |solver_status|积分器状态|枚举|success只说明已接受的数值推进成功；不是网格收敛或PDE求解状态。|无|
 |mesh_status|网格收敛状态|枚举|converged表示声明的网格残量/窗口/几何/连续判据满足；不证明局部或全局能量最小值。|无|
+|physical_dt|物理时间步长 Δt|物理时间|t_(n+1)-t_n；与网格伪时间步长Δs及浏览器播放间隔不同。静态输入为0。|无|
+|metric_version|本轮度量版本|版本|每次冻结度量求解对应独立版本与epoch。Burgers度量来自当前数值P1解梯度，解析演示来自当前时刻解析目标。|无|
+|outer_residual|耦合外层残量|无量纲|Burgers为max(网格变化/1e-3,同时间场变化/1e-4)；解析目标为max(网格变化/1e-3,度量变化/1e-3)。首次Burgers轮缺少场变化参照时为null，状态为not_checked。|无|
+|outer_tol|耦合残量阈值|无量纲|本演示归一化外层残量阈值为1；仍需内层完整达标和场景要求的连续检查，不能仅凭此一值宣告整体收敛。|无|
+|outer_status|耦合外层状态|状态|converged已满足；not_checked尚无所需参照；not_applicable不适用；not_converged继续迭代；cap_reached预算到达。主故事显示本物理步最终状态，算法区显示选中k的状态。|无|
+|pde_status|PDE求解状态|状态|converged表示离散非线性系统达到残量阈值；解析目标演示为not_applicable。它不证明移动网格优于固定网格或网格已收敛。|无|
+|pde_nonlinear_residual|PDE非线性相对残量|无量纲|Burgers自由度上的\|\|A(U)U-b\|\|/max(\|\|b\|\|,1)，阈值1e-9；与网格残量及耦合外层残量分别判断。|无|
+|coordinate_coverage|内层坐标记录范围|范围|all_accepted保存实际每个接受步坐标；endpoints_only只有真实初末网格，其他接受步仅保存诊断，不插值伪造坐标。|无|

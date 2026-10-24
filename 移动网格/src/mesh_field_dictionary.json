@@ -1,5 +1,5 @@
 {
-  "version": "mesh-fields-v2.0",
+  "version": "mesh-fields-v2.1",
   "alias_scope": "iteration/step/gradient_norm仅指本项目归档的FEALPy E JSON；其他算法同名字段不按这些别名解释。静态输入不推进物理步n，outer_iteration表示一次冻结网格优化轮次。",
   "index_policy": "物理时间步n与耦合轮次k从1计数；BDF初始状态j=0；保存帧索引从0计数，界面显示索引+1。",
   "fields": [
@@ -175,6 +175,70 @@
       "label": "网格收敛状态",
       "unit": "枚举",
       "definition": "converged表示声明的网格残量/窗口/几何/连续判据满足；不证明局部或全局能量最小值。",
+      "aliases": []
+    },
+    {
+      "key": "physical_dt",
+      "symbol": "",
+      "label": "物理时间步长 Δt",
+      "unit": "物理时间",
+      "definition": "t_(n+1)-t_n；与网格伪时间步长Δs及浏览器播放间隔不同。静态输入为0。",
+      "aliases": []
+    },
+    {
+      "key": "metric_version",
+      "symbol": "",
+      "label": "本轮度量版本",
+      "unit": "版本",
+      "definition": "每次冻结度量求解对应独立版本与epoch。Burgers度量来自当前数值P1解梯度，解析演示来自当前时刻解析目标。",
+      "aliases": []
+    },
+    {
+      "key": "outer_residual",
+      "symbol": "",
+      "label": "耦合外层残量",
+      "unit": "无量纲",
+      "definition": "Burgers为max(网格变化/1e-3,同时间场变化/1e-4)；解析目标为max(网格变化/1e-3,度量变化/1e-3)。首次Burgers轮缺少场变化参照时为null，状态为not_checked。",
+      "aliases": []
+    },
+    {
+      "key": "outer_tol",
+      "symbol": "",
+      "label": "耦合残量阈值",
+      "unit": "无量纲",
+      "definition": "本演示归一化外层残量阈值为1；仍需内层完整达标和场景要求的连续检查，不能仅凭此一值宣告整体收敛。",
+      "aliases": []
+    },
+    {
+      "key": "outer_status",
+      "symbol": "",
+      "label": "耦合外层状态",
+      "unit": "状态",
+      "definition": "converged已满足；not_checked尚无所需参照；not_applicable不适用；not_converged继续迭代；cap_reached预算到达。主故事显示本物理步最终状态，算法区显示选中k的状态。",
+      "aliases": []
+    },
+    {
+      "key": "pde_status",
+      "symbol": "",
+      "label": "PDE求解状态",
+      "unit": "状态",
+      "definition": "converged表示离散非线性系统达到残量阈值；解析目标演示为not_applicable。它不证明移动网格优于固定网格或网格已收敛。",
+      "aliases": []
+    },
+    {
+      "key": "pde_nonlinear_residual",
+      "symbol": "",
+      "label": "PDE非线性相对残量",
+      "unit": "无量纲",
+      "definition": "Burgers自由度上的||A(U)U-b||/max(||b||,1)，阈值1e-9；与网格残量及耦合外层残量分别判断。",
+      "aliases": []
+    },
+    {
+      "key": "coordinate_coverage",
+      "symbol": "",
+      "label": "内层坐标记录范围",
+      "unit": "范围",
+      "definition": "all_accepted保存实际每个接受步坐标；endpoints_only只有真实初末网格，其他接受步仅保存诊断，不插值伪造坐标。",
       "aliases": []
     }
   ]

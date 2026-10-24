@@ -24,6 +24,7 @@ def add_display_metrics(result):
             for state in row["inner"]["accepted_step_trace"]:
                 nodes = np.array(state["physical"])
                 state.update(quality_metrics(nodes, reference, cells, PoissonCase(key).metric(nodes[cells].mean(axis=1))))
+                state["energy_relative_change"]=state["energy"]/row["inner"]["accepted_step_trace"][0]["energy"]-1.
 
 
 def write_viewer(result, output):

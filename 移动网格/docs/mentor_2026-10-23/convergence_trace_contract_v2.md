@@ -2,7 +2,7 @@
 
 ## 版本与职责
 
-`schema_version = mesh-evolution-v2.0`；`criterion_version = projected-balanced-residual-window-v2`；词典为 `mesh-fields-v2.0`。
+`schema_version = mesh-evolution-v2.0`；`criterion_version = projected-balanced-residual-window-v2`；词典为 `mesh-fields-v2.1`。
 `src/mesh_convergence.py:MeshConvergenceMonitor` 只接收已接受候选，不执行BDF、绘图或网格重建。
 `src/fealpy_mesh_evolution.py:solve` 保留FEALPy能量、投影速度与原BDF路线，负责数值积分与几何检查。
 `src/mesh_trace.py:epoch_metadata` 序列化监控结果；`render_diagnostic_assets` 将共用词典和面板嵌入离线HTML。
