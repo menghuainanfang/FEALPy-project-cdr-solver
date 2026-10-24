@@ -68,6 +68,8 @@ cap_reached=true且criterion_met=false必须是未收敛网格。
 - 顶层`criterion_met/cap_reached/mesh_status/solver_status/first_converged_s/last_unmet_reasons`对应终态；`saved_frames`指frames数组长度，不指接受状态轨迹长度。
 - `solver_config/pseudo_time_cap/metric_provenance/epoch_id`保留数值条件。实验导出根节点另记Git与FEALPy SHA/dirty、解释器、依赖、seed和mesh size；内层记录继承根节点的运行来源。
 
+j=0不意味着RHS尚未评估：积分器初始化、首步估计和数值Jacobian可已有回调；nfev按本机SciPy定义分列。现有Python关键字max_internal_steps保留，其状态/统计名统一为max_accepted_steps。
+
 P2每个物理步的n从1计数，初始n=0；k从1计数；内层j=0为初始状态。静态输入没有物理推进，优化前后n都为0。
 P2以物理时间、物理步和metric版本组织epoch，示例ID为 `physical_step_1_outer_1_metric_1`。同一个物理时步的不同k对应不同冻结epoch。
 UI将当前诊断的接受时刻与当前可视化采样时刻同时列出；点击诊断图或讲解步骤选择的是实际接受检查，网格画面定位到最近保存采样。
@@ -76,7 +78,7 @@ UI将当前诊断的接受时刻与当前可视化采样时刻同时列出；点
 
 现有E/H原始JSON保留。没有convergence_trace的旧JSON通过共享面板的 `normalizeScene` 读取原有帧与接受步计数，但不补算连续计数、geometry_valid、criterion_met或首次达标时刻。
 原版E的gradient_norm只作为速度显示，不转换成r_RMS；没有真实接受步统计时显示“未提供”。旧记录的最终stop_reason与当前检查是否达标分栏。
-`python -m tools.render_legacy_mesh_viewers` 只更新已有HTML解释层，不改数值JSON。旧版页面与源码可在ba0d1aa及此前归档恢复。
+`python -m tools.render_mesh_viewers` 只更新已有HTML解释层，不改数值JSON。旧版页面与源码可在ba0d1aa及此前归档恢复。
 
 ## 结论边界
 

@@ -24,8 +24,18 @@ import scipy
 from src.geometry import signed_triangle_areas
 from src.variational_mesh import band_metric
 from src.fealpy_mesh_evolution import solve
+from src.mesh_trace import FIELD_DICTIONARY, SCHEMA_VERSION, render_diagnostic_assets
 
 ROOT = Path(__file__).resolve().parents[1]
+
+
+def write_viewer(result, output):
+    encoded = json.dumps(result, ensure_ascii=False, allow_nan=False)
+    template = Path(__file__).with_name("mesh_viewer.html").read_text(encoding="utf-8")
+    (output / "e_variational_mesh.html").write_text(
+        render_diagnostic_assets(template).replace("__EXPERIMENT_DATA__", encoded)
+        .replace("../demos/index.html", Path(os.path.relpath(ROOT / "demos/index.html", output)).as_posix())
+        .replace("../index.html", Path(os.path.relpath(ROOT / "index.html", output)).as_posix()), encoding="utf-8")
 
 
 def git_state(folder):
@@ -76,6 +86,8 @@ def main():
         scenes[name] = solve(reference, physical, cells, boundary, metric,
                              duration=args.duration, frames=args.frames,
                              rtol=args.rtol, atol=args.atol,
+                             epoch_id=f"E_{name}_frozen_metric",
+                             metric_provenance="identity cell metric" if name == "smoothing" else "src.variational_mesh.band_metric(strength=30), prescribed analytic band",
                              boundary_mode=mode, metric_function=metric_function)
         scenes[name]["fixed_physical"] = physical.tolist()
         scenes[name]["frozen_metric"] = metric.tolist()
@@ -88,7 +100,8 @@ def main():
                   "fealpy": git_state(Path(fealpy.__file__).resolve().parents[1]),
                   "elapsed_seconds": elapsed, "backend": "numpy", "dtype": "float64"}
     config = {**vars(args), "output_dir": str(args.output_dir)}
-    result = {"config": config, "provenance": provenance,
+    result = {"schema_version": SCHEMA_VERSION, "field_dictionary": FIELD_DICTIONARY,
+              "config": config, "provenance": provenance,
               "reference": reference.tolist(), "cells": cells.tolist(),
               "edges": np.asarray(bm.to_numpy(mesh.entity("edge"))).tolist(),
               "boundary": boundary.tolist(), "scenes": scenes}
@@ -96,11 +109,7 @@ def main():
     output.mkdir(parents=True, exist_ok=True)
     encoded = json.dumps(result, ensure_ascii=False, allow_nan=False)
     (output / "e_variational_mesh.json").write_text(encoded, encoding="utf-8")
-    template = Path(__file__).with_name("mesh_viewer.html").read_text(encoding="utf-8")
-    (output / "e_variational_mesh.html").write_text(
-        template.replace("__EXPERIMENT_DATA__", encoded)
-        .replace("../demos/index.html", Path(os.path.relpath(ROOT / "demos/index.html", output)).as_posix())
-        .replace("../index.html", Path(os.path.relpath(ROOT / "index.html", output)).as_posix()), encoding="utf-8")
+    write_viewer(result, output)
     fig, axes = plt.subplots(3, 3, figsize=(13, 12), constrained_layout=True)
     for row, (name, scene) in enumerate(scenes.items()):
         first, last = scene["frames"][0], scene["frames"][-1]

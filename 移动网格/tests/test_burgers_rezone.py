@@ -66,6 +66,7 @@ def test_static_input_optimizes_once_and_bad_mesh_is_rejected():
     final = static["states"][-1]
     assert final["physical_time"] == 0.
     assert final["physical_step_index"] == 0
+    assert final["outer_iterations"][0]["mesh_inner"]["epoch_id"].startswith("physical_step_0_")
     assert len(final["outer_iterations"]) == 1
     assert final["pde"]["status"] == "not_advanced_static_input"
     assert final["outer_stop_reason"] == "static_single_optimization"

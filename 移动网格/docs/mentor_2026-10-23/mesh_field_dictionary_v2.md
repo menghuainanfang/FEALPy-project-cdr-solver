@@ -16,7 +16,7 @@ iteration/step/gradient_norm仅指本项目归档的FEALPy E JSON；其他算法
 |rejected_bdf_attempts|BDF拒绝尝试数|次或未提供|当前SciPy公开API未准确提供，JSON为null、界面显示未提供；不从nfev推断。|rejected_error_test_steps|
 |saved_frames|可播放保存帧数|帧|frames数组的输出采样帧数；BDF接受状态轨迹另存，不混作同一帧索引。改变采样密度不改变底层方程和网格停止规则。|无|
 |display_frame_index|当前可视化帧|0-based索引|数组索引从0开始；UI显示第index+1/总帧数，不称迭代次数。|output_frame_index, iteration|
-|nfev|RHS调用数|次|SciPy BDF计数的RHS评估；不含其数值Jacobian差分中部分额外回调；实际含差分调用另列。|无|
+|nfev|RHS调用数|次|SciPy计数的RHS评估；初始化与首步估计可在j=0时已产生调用。数值Jacobian经fun_vectorized的额外RHS回调不计入nfev，实际含差分调用另列。|无|
 |njev|Jacobian计算数|次|SciPy报告的Jacobian评估次数，不是接受步或RHS次数。|无|
 |nlu|LU分解数|次|SciPy报告的线性系统LU分解次数，不是非线性迭代数。|无|
 |pseudo_step_size|BDF内部接受步长|网格伪时间单位|成功推进时s_j-s_(j-1)，由误差控制决定；初始状态为0。|accepted_dt|

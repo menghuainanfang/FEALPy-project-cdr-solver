@@ -3,6 +3,7 @@ import pytest
 
 from src.mesh_convergence import AcceptedMeshState, Convergence, MeshConvergenceMonitor
 from src.fealpy_mesh_evolution import solve
+import src.fealpy_mesh_evolution as evolution
 from tests.test_fealpy_mesh_evolution import mesh_data
 from src.variational_mesh import band_metric
 
@@ -60,6 +61,8 @@ def test_geometry_or_solver_failure_cannot_be_converged():
         m.check(state(0.), 0)
         row = m.check(state(1., valid=valid), 1, solver_success=solver_success)
         assert not row["criterion_met"] and row["stop_reason"] == reason
+    initial_failure = monitor().check(state(0.), 0, solver_success=False)
+    assert initial_failure["solver_status"] == "failed"
 
 
 def test_energy_scaling_and_epoch_reset_do_not_mix_energy_curves():
@@ -82,3 +85,21 @@ def test_free_scalar_dof_definition_matches_boundary_constraints(mode, expected)
     assert result["free_scalar_dofs"] == result["norm_definition"]["free_scalar_dofs"] == expected
     assert result["solver_status"] == "success"
     assert result["schema_version"] == "mesh-evolution-v2.0"
+
+
+def test_integrator_failure_is_serialized_without_claiming_mesh_convergence(monkeypatch):
+    real_bdf = evolution.BDF
+
+    class FailingBDF(real_bdf):
+        def step(self):
+            raise RuntimeError("test integrator failure")
+
+    monkeypatch.setattr(evolution, "BDF", FailingBDF)
+    x, c, b = mesh_data()
+    result = solve(x, x, c, b, band_metric(x[c].mean(axis=1)), frames=3)
+    assert result["solver_status"] == "failed"
+    assert result["mesh_status"] == "not_converged"
+    assert result["stop_reason"] == "solver_failure"
+    assert result["solver_message"] == "test integrator failure"
+    assert not result["criterion_met"]
+    assert result["solver_stats"]["accepted_bdf_steps"] == 0

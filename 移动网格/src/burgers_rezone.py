@@ -164,7 +164,7 @@ def run(*, n=8, steps=3, dt=.02, inner_cap=3., max_outer=6, moving=True,
             if moving:
                 inner = move_mesh(reference, nodes, cells, boundary, frozen_metric,
                                   duration=inner_cap, frames=8, save_inner_meshes=True,
-                                  epoch_id=f"physical_step_{step+1}_outer_{k+1}_metric_{metric_version}",
+                                  epoch_id=f"physical_step_{0 if static else step+1}_outer_{k+1}_metric_{metric_version}",
                                   metric_provenance="I + 2*grad(U_h)*grad(U_h)^T/(1+|grad(U_h)|^2), numerical P1 cell gradient")
                 if inner["stop_reason"] in ("invalid_mesh", "solver_failure", "max_accepted_steps"):
                     raise RuntimeError(f"Mesh step failed: {inner['stop_reason']}: {inner['solver_message']}")

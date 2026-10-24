@@ -2,11 +2,11 @@
 <html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>移动网格 · 实验演示</title>
 <style>
 :root{color-scheme:light}*{box-sizing:border-box}body{margin:0;background:#f0f5f3;color:#17343c;font:16px/1.8 system-ui,"Microsoft YaHei",sans-serif}main{max-width:1050px;margin:auto;padding:40px 24px}a{color:#087f82}h1{font-size:36px}nav{display:flex;gap:20px;flex-wrap:wrap}.grid{display:grid;grid-template-columns:1fr 1fr;gap:20px}.card{background:#fff;border:1px solid #d5e0df;border-radius:12px;padding:24px}.card a{font-size:21px;font-weight:650}.card p,footer{color:#58717b}a:focus-visible{outline:3px solid #d28c32;outline-offset:4px}@media(max-width:650px){.grid{grid-template-columns:1fr}h1{font-size:28px}main{padding:24px 18px}}</style>
-<main><nav><a href="../index.html">← 研究导航</a><a href="../docs/mentor_2026-10-23/diagnosis.md">数值诊断与重跑说明</a></nav>
+<main><nav><a href="../index.html">← 研究导航</a><a href="../docs/mentor_2026-10-23/convergence_counts_audit_v2.md">61 / 111 / 57 计数审计</a><a href="../docs/mentor_2026-10-23/mesh_field_dictionary_v2.md">数字词典</a></nav>
 <p>二维实验 / 离线回放</p><h1>从网格伪时间到物理时间</h1><p>选择一个实验，查看其网格、误差和实际停止状态。</p>
 <div class="grid">
-<article class="card"><a href="../results/mentor_2026-10-23/e_convergence/e_variational_mesh.html">E · 冻结度量与收敛停止 →</a><p>计算 / 物理网格并排；投影速度、冻结能量、有向面积和真实 BDF 统计。</p><a href="../results/e_variational_mesh.html" style="font-size:15px">原版 0.5 伪时间基线</a></article>
+<article class="card"><a href="../results/mentor_2026-10-23/p1_v2/e/e_variational_mesh.html">E · 冻结度量与收敛停止 →</a><p>计算 / 物理网格并排；投影速度、冻结能量、有向面积和真实 BDF 统计。</p><a href="../results/e_variational_mesh.html" style="font-size:15px">原版 0.5 伪时间基线</a></article>
 <article class="card"><a href="../results/f_poisson_comparison.html">F · Poisson 精度对照 →</a><p>相同自由度下比较不同网格的稳态 PDE 误差与计算成本。</p></article>
-<article class="card"><a href="../results/mentor_2026-10-23/burgers/h_burgers.html">H · Burgers 物理时间三层循环 →</a><p>真实非线性 PDE 时间推进，PDE / 度量 / 网格交替，展开每次冻结问题的接受步。</p></article>
+<article class="card"><a href="../results/mentor_2026-10-23/burgers/h_burgers.html">H · Burgers 物理时间三层循环 →</a><p>真实非线性 PDE 时间推进，PDE / 度量 / 网格交替，展开每次冻结问题的接受步。</p><a href="../results/mentor_2026-10-23/p1_v2/h_preview/h_burgers.html" style="font-size:15px">v2 共用收敛面板 · 两个物理步</a></article>
 <article class="card"><h2>G · 经典复现</h2><p>当前没有独立 G 演示结果。</p><a href="../docs/experiment_protocol.md" style="font-size:15px">实验协议与证据口径</a></article>
 </div><footer>网页使用内嵌数据与原生绘图，支持静态离线打开。研究任务、文献与主档通过研究导航访问。</footer></main></html>

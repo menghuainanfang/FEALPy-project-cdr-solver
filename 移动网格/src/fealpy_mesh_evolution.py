@@ -285,12 +285,10 @@ def solve(reference, physical, cells, boundary, metric, *, duration=.5, frames=6
         except (ValueError, RuntimeError, np.linalg.LinAlgError) as error:
             reason, message = "solver_failure", str(error)
             convergence_trace.append(diagnose(previous_row, previous_q, accepted_steps, solver_success=False))
-            convergence_trace[-1]["solver_status"] = "failed"
             break
         if solver.status == "failed":
             reason = "solver_failure"
             convergence_trace.append(diagnose(previous_row, previous_q, accepted_steps, solver_success=False))
-            convergence_trace[-1]["solver_status"] = "failed"
             break
         accepted_steps += 1
         try:

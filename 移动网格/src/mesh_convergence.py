@@ -137,7 +137,7 @@ class MeshConvergenceMonitor:
                "required_successes": None if cfg is None else cfg.consecutive_steps,
                "criterion_met": criterion_met, "cap_reached": cap_reached,
                "step_limit_reached": step_limit_reached, "stop_reason": reason,
-               "solver_status": "success" if solver_success and accepted_step_index > 0 else "not_started" if accepted_step_index == 0 else "failed",
+               "solver_status": "failed" if not solver_success else "success" if accepted_step_index > 0 else "not_started",
                "mesh_status": "converged" if criterion_met else "invalid_mesh" if not geometry_valid else "not_converged",
                "first_residual_met_s": self.first_residual, "first_conditions_met_s": self.first_conditions,
                "first_converged_s": self.first_converged, "unmet_reasons": unmet,

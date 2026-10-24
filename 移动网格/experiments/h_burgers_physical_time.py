@@ -16,6 +16,7 @@ import scipy
 
 from experiments.e_variational_mesh_visual import git_state
 from src.burgers_rezone import run, transfer
+from src.mesh_trace import FIELD_DICTIONARY, SCHEMA_VERSION, render_diagnostic_assets
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -59,6 +60,7 @@ def main():
                  max_outer=args.max_outer, perturbation=args.perturbation, static=args.static)
     result["fixed_grid_baseline"] = run(n=args.nx, steps=args.steps, dt=args.dt, moving=False,
                                          static=args.static, perturbation=args.perturbation)
+    result.update(schema_version=SCHEMA_VERSION, field_dictionary=FIELD_DICTIONARY)
     result["provenance"] = {"created_at": datetime.now().astimezone().isoformat(), "python": sys.executable,
                             "python_version": sys.version, "numpy": np.__version__, "scipy": scipy.__version__,
                             "project": git_state(ROOT), "fealpy": git_state(Path(fealpy.__file__).resolve().parents[1]),
@@ -69,7 +71,7 @@ def main():
     (output / "h_burgers.json").write_text(encoded, encoding="utf-8")
     template = Path(__file__).with_name("physical_time_viewer.html").read_text(encoding="utf-8")
     import os
-    (output / "h_burgers.html").write_text(template.replace("__EXPERIMENT_DATA__", encoded).replace(
+    (output / "h_burgers.html").write_text(render_diagnostic_assets(template).replace("__EXPERIMENT_DATA__", encoded).replace(
         "__DEMO_LINK__", Path(os.path.relpath(ROOT / "demos/index.html", output)).as_posix()), encoding="utf-8")
     rows = []
     cells = np.array(result["cells"])
