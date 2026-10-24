@@ -1,4 +1,6 @@
-# 本轮交接
+# 当前交付与历史交接
+
+当前程序、数据与验收见[P1优化流程](mentor_2026-10-23/optimization_flow.md)、[P2长物理时间](mentor_2026-10-23/three_loop_time_demo_v2.md)和[文档分类](README.md)。下文保留早期阶段交接，当前研究方向见[研究方向与阅读计划](research_overview.md)。
 
 日期：2026-09-27
 

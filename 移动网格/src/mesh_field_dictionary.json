@@ -1,0 +1,245 @@
+{
+  "version": "mesh-fields-v2.1",
+  "alias_scope": "iteration/step/gradient_norm仅指本项目归档的FEALPy E JSON；其他算法同名字段不按这些别名解释。静态输入不推进物理步n，outer_iteration表示一次冻结网格优化轮次。",
+  "index_policy": "物理时间步n与耦合轮次k从1计数；BDF初始状态j=0；保存帧索引从0计数，界面显示索引+1。",
+  "fields": [
+    {
+      "key": "physical_time",
+      "symbol": "t",
+      "label": "物理时间",
+      "unit": "PDE模型时间单位",
+      "definition": "真实PDE演化时间；独立于网格伪时间与墙钟耗时。",
+      "aliases": [
+        "t"
+      ]
+    },
+    {
+      "key": "physical_step_index",
+      "symbol": "n",
+      "label": "物理时间步",
+      "unit": "步",
+      "definition": "第n次t_(n-1)到t_n的PDE推进，从1计数；初始状态为0，保存帧数另计。",
+      "aliases": []
+    },
+    {
+      "key": "outer_iteration",
+      "symbol": "k",
+      "label": "物理解—网格耦合轮次",
+      "unit": "轮",
+      "definition": "同一个物理时间步内的PDE/度量/重分布交替，从1计数。",
+      "aliases": []
+    },
+    {
+      "key": "mesh_pseudo_time",
+      "symbol": "s",
+      "label": "网格伪时间",
+      "unit": "规定网格演化单位，非SI秒",
+      "definition": "网格ODE的独立变量；不是物理时间或CPU耗时。",
+      "aliases": [
+        "pseudo_time"
+      ]
+    },
+    {
+      "key": "accepted_bdf_steps",
+      "symbol": "j",
+      "label": "BDF已接受内部步",
+      "unit": "步",
+      "definition": "成功BDF.step推进次数；初始状态j=0不算一步。与保存帧数无固定大小关系。",
+      "aliases": []
+    },
+    {
+      "key": "rejected_bdf_attempts",
+      "symbol": "",
+      "label": "BDF拒绝尝试数",
+      "unit": "次或未提供",
+      "definition": "当前SciPy公开API未准确提供，JSON为null、界面显示未提供；不从nfev推断。",
+      "aliases": [
+        "rejected_error_test_steps"
+      ]
+    },
+    {
+      "key": "saved_frames",
+      "symbol": "",
+      "label": "可播放保存帧数",
+      "unit": "帧",
+      "definition": "frames数组的可播放帧数。默认是独立输出采样；replay_mode=accepted_states时，每帧对应同编号BDF接受状态，包含j=0初态，因此帧数=接受步数+1。改变展示采样密度不改变底层方程和停止规则。",
+      "aliases": []
+    },
+    {
+      "key": "display_frame_index",
+      "symbol": "",
+      "label": "当前可视化帧",
+      "unit": "0-based索引",
+      "definition": "数组索引从0开始；UI显示第index+1/总帧数，不称迭代次数。",
+      "aliases": [
+        "output_frame_index",
+        "iteration"
+      ]
+    },
+    {
+      "key": "nfev",
+      "symbol": "",
+      "label": "RHS调用数",
+      "unit": "次",
+      "definition": "SciPy计数的RHS评估；初始化与首步估计可在j=0时已产生调用。数值Jacobian经fun_vectorized的额外RHS回调不计入nfev，实际含差分调用另列。",
+      "aliases": []
+    },
+    {
+      "key": "njev",
+      "symbol": "",
+      "label": "Jacobian计算数",
+      "unit": "次",
+      "definition": "SciPy报告的Jacobian评估次数，不是接受步或RHS次数。",
+      "aliases": []
+    },
+    {
+      "key": "nlu",
+      "symbol": "",
+      "label": "LU分解数",
+      "unit": "次",
+      "definition": "SciPy报告的线性系统LU分解次数，不是非线性迭代数。",
+      "aliases": []
+    },
+    {
+      "key": "pseudo_step_size",
+      "symbol": "Δs",
+      "label": "BDF内部接受步长",
+      "unit": "网格伪时间单位",
+      "definition": "成功推进时s_j-s_(j-1)，由误差控制决定；初始状态为0。",
+      "aliases": [
+        "accepted_dt"
+      ]
+    },
+    {
+      "key": "output_sample_dt",
+      "symbol": "",
+      "label": "相邻展示帧间隔",
+      "unit": "网格伪时间单位",
+      "definition": "由可视化采样决定的两帧时间差；不用于判断BDF接受步长或收敛。",
+      "aliases": [
+        "sample_dt",
+        "step"
+      ]
+    },
+    {
+      "key": "wall_clock_seconds",
+      "symbol": "",
+      "label": "真实运行耗时",
+      "unit": "墙钟秒",
+      "definition": "perf_counter实测的数值驱动耗时；与物理时间和网格伪时间独立。",
+      "aliases": [
+        "wall_seconds"
+      ]
+    },
+    {
+      "key": "mesh_energy",
+      "symbol": "I_h",
+      "label": "冻结度量下网格能量",
+      "unit": "当前离散泛函归一化单位",
+      "definition": "I_h(xi;X_old,M_fixed)，每个epoch单独定义；不是PDE自由能，不能跨epoch无条件解释单调。",
+      "aliases": [
+        "energy"
+      ]
+    },
+    {
+      "key": "mesh_residual_rms",
+      "symbol": "r_RMS",
+      "label": "网格平衡残量RMS",
+      "unit": "无量纲",
+      "definition": "sqrt(sum_free((tau*v_i/h_i)^2)/N_free_scalar)，为投影且经节点平衡的速度残量；不是原始梯度。r_ref为该epoch初始值。",
+      "aliases": [
+        "scaled_residual_rms"
+      ]
+    },
+    {
+      "key": "velocity_norm",
+      "symbol": "||v||",
+      "label": "投影伪时间速度范数",
+      "unit": "计算坐标/网格伪时间",
+      "definition": "自由标量分量的欧氏范数，含tau与节点平衡缩放；不能单独据此称能量极小。",
+      "aliases": [
+        "gradient_norm"
+      ]
+    },
+    {
+      "key": "solver_status",
+      "symbol": "",
+      "label": "积分器状态",
+      "unit": "枚举",
+      "definition": "success只说明已接受的数值推进成功；不是网格收敛或PDE求解状态。",
+      "aliases": []
+    },
+    {
+      "key": "mesh_status",
+      "symbol": "",
+      "label": "网格收敛状态",
+      "unit": "枚举",
+      "definition": "converged表示声明的网格残量/窗口/几何/连续判据满足；不证明局部或全局能量最小值。",
+      "aliases": []
+    },
+    {
+      "key": "physical_dt",
+      "symbol": "",
+      "label": "物理时间步长 Δt",
+      "unit": "物理时间",
+      "definition": "t_(n+1)-t_n；与网格伪时间步长Δs及浏览器播放间隔不同。静态输入为0。",
+      "aliases": []
+    },
+    {
+      "key": "metric_version",
+      "symbol": "",
+      "label": "本轮度量版本",
+      "unit": "版本",
+      "definition": "每次冻结度量求解对应独立版本与epoch。Burgers度量来自当前数值P1解梯度，解析演示来自当前时刻解析目标。",
+      "aliases": []
+    },
+    {
+      "key": "outer_residual",
+      "symbol": "",
+      "label": "耦合外层残量",
+      "unit": "无量纲",
+      "definition": "Burgers为max(网格变化/1e-3,同时间场变化/1e-4)；解析目标为max(网格变化/1e-3,度量变化/1e-3)。首次Burgers轮缺少场变化参照时为null，状态为not_checked。",
+      "aliases": []
+    },
+    {
+      "key": "outer_tol",
+      "symbol": "",
+      "label": "耦合残量阈值",
+      "unit": "无量纲",
+      "definition": "本演示归一化外层残量阈值为1；仍需内层完整达标和场景要求的连续检查，不能仅凭此一值宣告整体收敛。",
+      "aliases": []
+    },
+    {
+      "key": "outer_status",
+      "symbol": "",
+      "label": "耦合外层状态",
+      "unit": "状态",
+      "definition": "converged已满足；not_checked尚无所需参照；not_applicable不适用；not_converged继续迭代；cap_reached预算到达。主故事显示本物理步最终状态，算法区显示选中k的状态。",
+      "aliases": []
+    },
+    {
+      "key": "pde_status",
+      "symbol": "",
+      "label": "PDE求解状态",
+      "unit": "状态",
+      "definition": "converged表示离散非线性系统达到残量阈值；解析目标演示为not_applicable。它不证明移动网格优于固定网格或网格已收敛。",
+      "aliases": []
+    },
+    {
+      "key": "pde_nonlinear_residual",
+      "symbol": "",
+      "label": "PDE非线性相对残量",
+      "unit": "无量纲",
+      "definition": "Burgers自由度上的||A(U)U-b||/max(||b||,1)，阈值1e-9；与网格残量及耦合外层残量分别判断。",
+      "aliases": []
+    },
+    {
+      "key": "coordinate_coverage",
+      "symbol": "",
+      "label": "内层坐标记录范围",
+      "unit": "范围",
+      "definition": "all_accepted保存实际每个接受步坐标；endpoints_only只有真实初末网格，其他接受步仅保存诊断，不插值伪造坐标。",
+      "aliases": []
+    }
+  ]
+}

@@ -20,6 +20,8 @@ def main():
         files = [
             "src/__init__.py", "src/geometry.py", "src/variational_mesh.py",
             "src/poisson_mesh_comparison.py", "src/fealpy_mesh_evolution.py", "experiments/__init__.py",
+            "src/mesh_convergence.py", "src/mesh_trace.py", "src/mesh_field_dictionary.json",
+            "experiments/mesh_diagnostics_view.js",
             "experiments/e_variational_mesh_visual.py", "experiments/mesh_viewer.html",
             "experiments/f_poisson_mesh_comparison.py", "experiments/poisson_viewer.html",
             "tests/test_geometry.py", "tests/test_variational_mesh.py",

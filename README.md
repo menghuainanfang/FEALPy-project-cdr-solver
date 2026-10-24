@@ -34,6 +34,15 @@ movingmesh/
 
 移动网格的资料、代码与结果统一保存在 `移动网格/`。其他任务在 `学习练手项目/` 下各建一个目录，配套项目 README，并加入该目录的项目表。
 
+## 当前移动网格成果
+
+|分类|入口|
+|---|---|
+|P1：收敛网格优化全流程|[在线演示](https://menghuainanfang.github.io/research-workspace/移动网格/results/mentor_2026-10-23/optimization_flow/index.html) · [实验说明](移动网格/docs/mentor_2026-10-23/optimization_flow.md)|
+|P2：长物理时间三重循环|[在线演示](https://menghuainanfang.github.io/research-workspace/移动网格/results/mentor_2026-10-23/p2_v2/index.html) · [实验说明](移动网格/docs/mentor_2026-10-23/three_loop_time_demo_v2.md)|
+|代码与数据|[算法](移动网格/src) · [实验](移动网格/experiments) · [结果分类](移动网格/results/README.md)|
+|验证与研究资料|[文档分类](移动网格/docs/README.md) · [研究方向与阅读计划](移动网格/docs/research_overview.md)|
+
 ## 本地使用
 
 本地工作库：`D:/桌面/movingmesh`。双击 `打开科研工作库.cmd` 浏览首页；运行程序时进入对应项目，按项目 README 配置环境。

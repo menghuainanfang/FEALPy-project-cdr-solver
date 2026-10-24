@@ -55,7 +55,7 @@ FEALPy 源码快照会安装 NumPy、SciPy、Matplotlib 等声明的依赖。不
 - `vendor/fealpy_source/`：本次使用的 FEALPy 源码快照及其版权、GPL 文件。
 - `requirements-lock-windows-py313.txt`：原机依赖版本记录，不是跨平台安装要求。
 
-复用 FEALPy MetricTensorAdaptive 的数值核心和切向边界投影，采用 SciPy BDF。默认 289 个 P1 自由度下，带状问题的均匀/固定边界自适应/切向边界自适应 L² 误差约为 0.06413/0.02546/0.01522。度量使用已知结构，移动成本高于一次小规模 Poisson 求解。具体结果和限制见 `docs/poisson_mesh_comparison.md`。
+复用 FEALPy MetricTensorAdaptive 的数值核心和切向边界投影，采用 SciPy BDF。默认 289 个 P1 自由度下，带状问题的均匀/切向边界自适应 L² 误差约为 0.06413/0.01522。度量使用已知结构，移动成本高于一次小规模 Poisson 求解。具体结果和限制见 `docs/poisson_mesh_comparison.md`。
 
 网页打开方式已在本机离线浏览器验证。没有在另一台实体电脑或 macOS/Linux 上执行安装验证；数值库版本、操作系统与计时不同可能产生数值末位或运行时间差异。
 

@@ -6,6 +6,7 @@ import argparse
 from datetime import datetime
 from importlib.metadata import version
 import json
+import os
 from pathlib import Path
 import subprocess
 import sys
@@ -23,8 +24,20 @@ import scipy
 from src.geometry import signed_triangle_areas
 from src.variational_mesh import band_metric
 from src.fealpy_mesh_evolution import solve
+from src.mesh_trace import FIELD_DICTIONARY, SCHEMA_VERSION, render_diagnostic_assets
 
 ROOT = Path(__file__).resolve().parents[1]
+
+
+def write_viewer(result, output):
+    result = {**result, "scenes": {name: scene for name, scene in result["scenes"].items()
+                                  if scene["boundary_mode"] == "tangent"}}
+    encoded = json.dumps(result, ensure_ascii=False, allow_nan=False)
+    template = Path(__file__).with_name("mesh_viewer.html").read_text(encoding="utf-8")
+    (output / "e_variational_mesh.html").write_text(
+        render_diagnostic_assets(template).replace("__EXPERIMENT_DATA__", encoded)
+        .replace("../demos/index.html", Path(os.path.relpath(ROOT / "demos/index.html", output)).as_posix())
+        .replace("../index.html", Path(os.path.relpath(ROOT / "index.html", output)).as_posix()), encoding="utf-8")
 
 
 def git_state(folder):
@@ -46,6 +59,9 @@ def main():
     parser.add_argument("--duration", type=float, default=0.5)
     parser.add_argument("--frames", type=int, default=61)
     parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument("--rtol", type=float, default=1e-6)
+    parser.add_argument("--atol", type=float, default=1e-8)
+    parser.add_argument("--output-dir", type=Path, default=ROOT / "results")
     args = parser.parse_args()
     if args.nx < 2 or args.duration <= 0 or args.frames < 2:
         parser.error("nx >= 2, duration > 0 and frames >= 2 are required")
@@ -66,11 +82,13 @@ def main():
     scenes = {}
     for name, physical, metric, mode in (
             ("smoothing", perturbed, identity, "tangent"),
-            ("adaptive_fixed", reference, band_metric(centers), "fixed"),
             ("adaptive", reference, band_metric(centers), "tangent")):
         metric_function = band_metric if name.startswith("adaptive") else None
         scenes[name] = solve(reference, physical, cells, boundary, metric,
                              duration=args.duration, frames=args.frames,
+                             rtol=args.rtol, atol=args.atol,
+                             epoch_id=f"E_{name}_frozen_metric",
+                             metric_provenance="identity cell metric" if name == "smoothing" else "src.variational_mesh.band_metric(strength=30), prescribed analytic band",
                              boundary_mode=mode, metric_function=metric_function)
         scenes[name]["fixed_physical"] = physical.tolist()
         scenes[name]["frozen_metric"] = metric.tolist()
@@ -82,18 +100,18 @@ def main():
                   "project": git_state(ROOT),
                   "fealpy": git_state(Path(fealpy.__file__).resolve().parents[1]),
                   "elapsed_seconds": elapsed, "backend": "numpy", "dtype": "float64"}
-    result = {"config": vars(args), "provenance": provenance,
+    config = {**vars(args), "output_dir": str(args.output_dir)}
+    result = {"schema_version": SCHEMA_VERSION, "field_dictionary": FIELD_DICTIONARY,
+              "config": config, "provenance": provenance,
               "reference": reference.tolist(), "cells": cells.tolist(),
               "edges": np.asarray(bm.to_numpy(mesh.entity("edge"))).tolist(),
               "boundary": boundary.tolist(), "scenes": scenes}
-    output = ROOT / "results"
-    output.mkdir(exist_ok=True)
+    output = args.output_dir
+    output.mkdir(parents=True, exist_ok=True)
     encoded = json.dumps(result, ensure_ascii=False, allow_nan=False)
     (output / "e_variational_mesh.json").write_text(encoded, encoding="utf-8")
-    template = Path(__file__).with_name("mesh_viewer.html").read_text(encoding="utf-8")
-    (output / "e_variational_mesh.html").write_text(
-        template.replace("__EXPERIMENT_DATA__", encoded), encoding="utf-8")
-    fig, axes = plt.subplots(3, 3, figsize=(13, 12), constrained_layout=True)
+    write_viewer(result, output)
+    fig, axes = plt.subplots(2, 3, figsize=(13, 8), constrained_layout=True)
     for row, (name, scene) in enumerate(scenes.items()):
         first, last = scene["frames"][0], scene["frames"][-1]
         for col, frame in enumerate((first, last)):

@@ -1,0 +1,2 @@
+﻿physical_time,outer_iterations,mesh_inner_accepted_steps,pde_status,l2_error,fixed_grid_l2_error,relative_nonlinear_residual,outer_stop_reason,min_signed_area,transfer_mass_change,mesh_change_max,field_change_on_current_nodes,metric_cellwise_change_norm
+0.0,1,111,not_advanced_static_input,,,,static_single_optimization,0.006385512474271352,-0.008913150033716233,0.05827716997068127,0.0,1.836518602256166

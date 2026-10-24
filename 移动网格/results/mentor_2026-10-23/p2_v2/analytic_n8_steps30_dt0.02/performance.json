@@ -1,0 +1,10 @@
+{
+  "wall_seconds": 126.54755469999509,
+  "compressed_state_bytes": 14856952,
+  "raw_bytes": 60835199,
+  "rejected_bdf_attempts": null,
+  "max_inner_steps": 138,
+  "dataset_bytes": 36560559,
+  "actual_physical_steps": 30,
+  "all_outer_converged": true
+}
