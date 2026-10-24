@@ -23,6 +23,17 @@
   const currentCase=()=>data.cases[el('case').value];
   const scientific=x=>x===0?'0':x.toExponential(2);
   const labels={setup:'建立计算映射',inner:'优化计算网格',mapping:'映射回物理网格',check:'检查外层收敛'};
+  function plot(id,rows,keys,colors,baseline){
+    const c=el(id),w=c.getBoundingClientRect().width,h=160,ratio=globalThis.devicePixelRatio||1;
+    if(w<1)return;c.width=w*ratio;c.height=h*ratio;const ctx=c.getContext('2d');ctx.scale(ratio,ratio);
+    const vals=rows.flatMap(r=>keys.map(k=>r[k])),lo=Math.min(...vals,baseline??Infinity),hi=Math.max(...vals,baseline??-Infinity),span=Math.max(hi-lo,1e-10);
+    const x=t=>52+(w-70)*t/Math.max(rows.at(-1).pseudo_time,1e-12),y=v=>15+115*(hi-v)/span;
+    ctx.font='10px system-ui';ctx.fillStyle='#647670';ctx.fillText(hi.toPrecision(4),0,19);ctx.fillText(lo.toPrecision(4),0,132);ctx.fillText('s=0',52,153);ctx.fillText('s='+rows.at(-1).pseudo_time.toPrecision(3),w-75,153);
+    if(baseline!=null){ctx.strokeStyle='#a8782a';ctx.setLineDash([4,4]);ctx.beginPath();ctx.moveTo(52,y(baseline));ctx.lineTo(w-18,y(baseline));ctx.stroke();ctx.setLineDash([]);}
+    keys.forEach((key,k)=>{ctx.strokeStyle=colors[k];ctx.beginPath();rows.forEach((r,i)=>i?ctx.lineTo(x(r.pseudo_time),y(r[key])):ctx.moveTo(x(r.pseudo_time),y(r[key])));ctx.stroke();});
+    const selected=events[at].j;ctx.fillStyle='#cb6438';ctx.beginPath();ctx.arc(x(rows[selected].pseudo_time),y(rows[selected][keys[0]]),3,0,2*Math.PI);ctx.fill();
+    c.onclick=e=>{const target=(e.clientX-c.getBoundingClientRect().left-52)/(w-70)*rows.at(-1).pseudo_time;let j=0;rows.forEach((r,i)=>{if(Math.abs(r.pseudo_time-target)<Math.abs(rows[j].pseudo_time-target))j=i;});select(events.findIndex(e=>e.k===events[at].k&&e.j===j));};
+  }
   function pause(){clearTimeout(timer);timer=null;el('play').textContent='播放全流程';}
   function mesh(id,nodes,ghost){
     const c=el(id),rect=c.getBoundingClientRect(),ratio=globalThis.devicePixelRatio||1;
@@ -61,6 +72,11 @@
     mesh('physical',view.mesh.physical,r.input_physical);
     el('residual').textContent=`内层残量 ${scientific(d.mesh_residual_rms)} / 阈值 ${scientific(d.residual_threshold)}`;
     el('inner-check').textContent=d.criterion_met?'内层已收敛':`内层连续达标 ${d.consecutive_success} / ${d.required_successes}`;
+    el('energy-value').textContent=`能量 ${view.mesh.energy.toFixed(6)} · 本轮变化 ${((view.mesh.energy/r.inner.accepted_step_trace[0].energy-1)*100).toFixed(3)}%`;
+    el('quality-value').textContent=`对齐 RMS ${view.mesh.alignment_rms.toFixed(4)} · 等分布 RMS ${view.mesh.equidistribution_rms.toFixed(4)}（理想值 1）`;
+    const ratios=[['残量',d.mesh_residual_rms,d.residual_threshold],['窗口位移',d.displacement,d.displacement_threshold],['能量变化率',d.energy_change_rate,d.energy_rate_threshold]];
+    el('thresholds').replaceChildren();for(const [label,value,tol] of ratios){const p=document.createElement('p');p.textContent=value==null?label+'：等待固定窗口':`${label} ${scientific(value)} / ${scientific(tol)} · ${value<=tol?'通过':'尚未通过'}`;const bar=document.createElement('meter');bar.min=0;bar.max=2;bar.low=0;bar.high=1;bar.optimum=0;bar.value=value==null?0:Math.min(2,value/tol);bar.title='指标/阈值，≤1通过；超过2按2显示';p.append(bar);el('thresholds').append(p);}
+    if(el('quantitative').open){plot('energy-curve',r.inner.accepted_step_trace,['energy'],['#087b69']);plot('quality-curve',r.inner.accepted_step_trace,['alignment_rms','equidistribution_rms'],['#57718a','#bb7a27'],1);}
     el('outer-check').textContent=event.phase==='check'?`外层网格变化 ${scientific(r.mesh_change)} · 度量变化 ${scientific(r.metric_change)} · 连续 ${r.consecutive_success} / ${cfg.consecutive_rounds}`:'外层判定在本轮映射完成后进行';
     const q=view.mesh.computational[tracked],x=view.mesh.physical[tracked];
     el('mapping-point').textContent=`同一顶点 ${tracked}：计算坐标 (${q.map(v=>v.toFixed(4)).join(', ')}) → 物理坐标 (${x.map(v=>v.toFixed(4)).join(', ')})。点击网格可更换跟踪点。`;
@@ -80,6 +96,7 @@
   el('previous').onclick=()=>select(at-1);el('next').onclick=()=>select(at+1);el('reset').onclick=()=>select(0);
   el('final').onclick=()=>select(events.length-1);el('timeline').oninput=()=>select(Number(el('timeline').value));
   el('rounds').onchange=()=>select(events.findIndex(e=>e.k===Number(el('rounds').value)));
+  el('quantitative').ontoggle=render;
   for(const [key,model] of Object.entries(data.cases)){const o=document.createElement('option');o.value=key;o.textContent=model.label;el('case').append(o);}
   el('case').value='band';el('case').onchange=choose;
   window.addEventListener('resize',render);document.addEventListener('visibilitychange',()=>{if(document.hidden)pause();});
