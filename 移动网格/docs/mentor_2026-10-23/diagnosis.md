@@ -38,3 +38,44 @@ cd D:\桌面\movingmesh\移动网格
 ```
 
 旧输出文件已单独留存，前两条原命令会写回常规 E 输出；后续比较使用专项输出目录。
+
+## 收敛判据（源码可见，本机已验证）
+
+`src/fealpy_mesh_evolution.py:solve/Convergence` 使用逐步 `BDF.step()`；`solve_ivp_baseline` 保留旧求解路径与旧字段供历史复核。
+新输出只用 `output_frame_index`、`sample_dt`、`velocity_norm`，没有占位 backtracks。速度为自由分量欧氏范数。
+FEALPy 数值速度满足 v_i = −P_i Π_i(∂I/∂ξ_i)/τ；P 为冻结节点平衡因子，Π 为边界约束投影。
+报告 `projected_gradient_norm = ||−τv/P||` 与 `scaled_residual_rms = rms(τv/h)`，后者在自由标量分量上统计；h_i 为参考网格最短相邻边长。
+该残量衡量在尺度化伪时间 s/τ 中的相对网格运动，消除了人为增大 τ 造成“速度很小”的误判。这里不是 PDE 残量。
+
+默认同时满足：R ≤ 1e−6 + 1e−4 R_initial；max_i|Δξ_i|/h_i ≤ 1e−5；τ|ΔI|/(Δs max(|I_initial|,1)) ≤ 1e−7；s ≥ 0.05；连续3个接受步。
+每个接受步检查计算网格、重建物理网格的有向面积、角点和固定/切向边界；仅在边界约束误差小于1e−10时施加精确边界坐标，便于下一轮插值。
+停止状态为 converged、pseudo_time_cap、solver_failure、invalid_mesh、max_internal_steps。输入非正定向直接抛出带 invalid_mesh 的异常。
+接受步数由 step() 成功推进计数；nfev/njev/nlu 分列，另外记录包括有限差分 Jacobian 的实际 RHS 调用数。
+SciPy BDF 公共接口不暴露内部误差拒步数，该项记录 null（未知），不能将其写成0；表中的错误状态数仅指检查过的接受端点。
+
+## 48组数值对照（本机已验证）
+
+`experiments/mentor_convergence_comparison.py:main`：n=8/16 × 扰动0.05/n、0.30/n × 三场景 × (rtol,atol)=(1e−4,1e−6)/(1e−6,1e−8) × 固定0.5/收敛上限5。
+三场景均使用同一种子42的扰动物理网格；自适应度量在该物理网格中心冻结。每种停止策略与精度使用完全相同的初值和度量。
+固定时长24组全部到0.5；收敛24组中14组达标、10组到上限5。总数值驱动墙钟56.54 s（含重建、诊断与回放采样，不含文件写入和汇总绘图）。
+完整JSON/CSV和接受步CSV在 `results/mentor_2026-10-23/comparison/`；收敛与冻结能量图为 `convergence.png`。
+
+以下为强扰动、较严求解器精度的收敛停止结果；完整配对表保留所有固定0.5结果。
+
+|n|场景|停止|s|接受步|墙钟s|最小有向面积|插值RMSE|
+|---:|---|---|---:|---:|---:|---:|---:|
+|8|smoothing|converged|2.121400|122|0.751|0.00201744|0.159842|
+|8|adaptive_fixed|converged|2.363951|134|1.060|0.00139429|0.0834549|
+|8|adaptive|converged|3.976463|146|1.070|0.00136965|0.0583306|
+|16|smoothing|pseudo_time_cap|5.000000|147|3.185|0.000200525|0.0565998|
+|16|adaptive_fixed|pseudo_time_cap|5.000000|171|3.704|0.000117386|0.0218064|
+|16|adaptive|pseudo_time_cap|5.000000|172|3.302|0.000111909|0.013975|
+
+48组接受端点无效状态共0，能量增加超过1e−10的接受步共1。接受端点观察不构成连续轨迹非退化或全离散能量稳定性定理。
+
+```powershell
+.\.venv\Scripts\python.exe -m experiments.mentor_convergence_comparison --cap 5
+.\.venv\Scripts\python.exe -m experiments.e_variational_mesh_visual --duration 5 --output-dir results/mentor_2026-10-23/e_convergence
+```
+
+向导师复述：61是展示采样帧数；BDF根据误差控制选取内部步，nfev是右端评估次数，三个数互不相同。当前实测没有57，需原日志才能追溯。0.5是网格伪时间上限；现在只有尺度化投影残量、相对位移和冻结能量变化率连续达标才称收敛，否则明确报告到上限。
