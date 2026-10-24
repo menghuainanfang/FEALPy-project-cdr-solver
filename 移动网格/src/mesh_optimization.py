@@ -20,7 +20,8 @@ class OuterConvergence:
 
 
 def run(case="band", *, n=8, perturbation=.2, inner_cap=40., max_outer=60,
-        outer=OuterConvergence(), metric_relaxation=.5):
+        outer=OuterConvergence(), metric_relaxation=.5, initial_physical=None,
+        prescribed_metric=None, epoch_prefix=None, save_inner_meshes=True, verbose=True):
     """Rebuild the physical mesh and resample its metric until a fixed point.
 
     Each round starts computational coordinates at the same reference mesh.
@@ -37,20 +38,21 @@ def run(case="band", *, n=8, perturbation=.2, inner_cap=40., max_outer=60,
     reference = np.asarray(mesh.node).copy()
     cells = np.asarray(mesh.cell)
     boundary = np.asarray(mesh.boundary_node_flag())
-    nodes = reference.copy()
-    nodes[~boundary] += np.random.default_rng(42).uniform(-perturbation/n, perturbation/n, (sum(~boundary), 2))
+    nodes = reference.copy() if initial_physical is None else np.array(initial_physical).copy()
+    if initial_physical is None:
+        nodes[~boundary] += np.random.default_rng(42).uniform(-perturbation/n, perturbation/n, (sum(~boundary), 2))
     initial = nodes.copy()
-    metric_function = PoissonCase(case).metric
+    metric_function = prescribed_metric or PoissonCase(case).metric
     metric = metric_function(nodes[cells].mean(axis=1))
     rounds, consecutive = [], 0
     stop_reason = "outer_iteration_cap"
     for k in range(1, max_outer+1):
         physical = nodes.copy()
         inner = solve(reference, physical, cells, boundary, metric, duration=inner_cap,
-                      frames=2, save_inner_meshes=True, boundary_mode="tangent",
-                      epoch_id=f"{case}_outer_{k}", metric_function=metric_function,
+                      frames=2, save_inner_meshes=save_inner_meshes, boundary_mode="tangent",
+                      epoch_id=f"{epoch_prefix or case}_outer_{k}", metric_function=metric_function,
                       metric_provenance=f"prescribed analytic {case} metric, resampled at physical cell centers each outer round")
-        nodes = np.asarray(inner["accepted_step_trace"][-1]["physical"])
+        nodes = np.asarray(inner["frames"][-1]["physical"])
         sampled_metric = metric_function(nodes[cells].mean(axis=1))
         next_metric = (1-metric_relaxation)*metric+metric_relaxation*sampled_metric
         mesh_change = float(n*np.linalg.norm(nodes-physical, axis=1).max())
@@ -81,8 +83,10 @@ def run(case="band", *, n=8, perturbation=.2, inner_cap=40., max_outer=60,
                        "inner_converged": inner_converged, "geometry_valid": geometry_valid,
                        "conditions_met": conditions_met, "consecutive_success": consecutive,
                        "outer_converged": converged, "unmet_reasons": reasons,
-                       "inner": {key: value for key, value in inner.items() if key not in ("frames", "history", "field_dictionary")}})
-        print(f"{case} k={k} inner={inner['stop_reason']} j={inner['solver_stats']['accepted_bdf_steps']} dx={mesh_change:.3g} dM={metric_change:.3g} consecutive={consecutive}", flush=True)
+                       "inner": {**{key: value for key, value in inner.items() if key not in ("frames", "history", "field_dictionary")},
+                                 "endpoint_states": [inner["frames"][0], inner["frames"][-1]]}})
+        if verbose:
+            print(f"{case} k={k} inner={inner['stop_reason']} j={inner['solver_stats']['accepted_bdf_steps']} dx={mesh_change:.3g} dM={metric_change:.3g} consecutive={consecutive}", flush=True)
         if not inner_converged or not geometry_valid:
             stop_reason = "inner_not_converged" if not inner_converged else "invalid_mesh"
             break

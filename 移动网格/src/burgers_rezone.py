@@ -123,7 +123,8 @@ def solve_step(nodes, cells, old_values, time, dt, data=BurgersData(), *, tolera
 
 
 def run(*, n=8, steps=3, dt=.02, inner_cap=3., max_outer=6, moving=True,
-        static=False, perturbation=0., data=BurgersData()):
+        static=False, perturbation=0., data=BurgersData(), save_inner_steps=None,
+        inner_frames=8, on_step=None):
     """Alternate PDE/metric/mesh at t_(n+1); transfer from the fixed t_n state.
 
     Each middle iteration solves the same physical step, rather than advancing
@@ -144,6 +145,11 @@ def run(*, n=8, steps=3, dt=.02, inner_cap=3., max_outer=6, moving=True,
     values = data.fields(nodes, 0.)[0]
     states = [{"physical_time": 0., "physical_step_index": 0, "nodes": nodes.tolist(), "values": values.tolist(),
                "metric": numerical_metric(nodes, cells, values).tolist(), "outer_iterations": []}]
+    states[0].update(t_start=0., t_end=0., physical_dt=0., outer_status="not_applicable",
+                     min_signed_area=float(signed_triangle_areas(nodes,cells).min()),
+                     input_physical=nodes.tolist(), k_actual=0,k_max=max_outer,outer_residual=None,outer_tol=1.)
+    if on_step:
+        on_step(states[0])
     metric_version = 0
     for step in range(1 if static else steps):
         time = 0. if static else (step+1)*dt
@@ -163,12 +169,14 @@ def run(*, n=8, steps=3, dt=.02, inner_cap=3., max_outer=6, moving=True,
             old_mesh = nodes.copy()
             if moving:
                 inner = move_mesh(reference, nodes, cells, boundary, frozen_metric,
-                                  duration=inner_cap, frames=8, save_inner_meshes=True,
+                                  duration=inner_cap, frames=inner_frames,
+                                  save_inner_meshes=save_inner_steps is None or step+1 in save_inner_steps,
                                   epoch_id=f"physical_step_{0 if static else step+1}_outer_{k+1}_metric_{metric_version}",
                                   metric_provenance="I + 2*grad(U_h)*grad(U_h)^T/(1+|grad(U_h)|^2), numerical P1 cell gradient")
                 if inner["stop_reason"] in ("invalid_mesh", "solver_failure", "max_accepted_steps"):
                     raise RuntimeError(f"Mesh step failed: {inner['stop_reason']}: {inner['solver_message']}")
                 nodes = np.array(inner["frames"][-1]["physical"])
+                inner["endpoint_states"] = [inner["frames"][0], inner["frames"][-1]]
             else:
                 inner = None
             mesh_change = float(np.max(np.linalg.norm(nodes-old_mesh, axis=1))*n)
@@ -178,11 +186,23 @@ def run(*, n=8, steps=3, dt=.02, inner_cap=3., max_outer=6, moving=True,
                 /max(np.linalg.norm(provisional), 1.))
             consistent = bool(mesh_change <= 1e-3 and field_change is not None and field_change <= 1e-4
                               and inner is not None and inner["stop_reason"] == "converged")
+            outer_residual = None if field_change is None else max(mesh_change/1e-3, field_change/1e-4)
+            outer_status = ("not_applicable" if static or not moving else "not_checked" if field_change is None else
+                            "converged" if consistent else "cap_reached" if k+1==max_outer else "not_converged")
+            unmet = (["首次耦合轮尚无前一轮同时间解，场一致性未检查"] if field_change is None else [])
+            if mesh_change>1e-3:
+                unmet.append(f"网格变化 {mesh_change:.6g} > 0.001")
+            if field_change is not None and field_change>1e-4:
+                unmet.append(f"同时间场变化 {field_change:.6g} > 0.0001")
+            if inner is not None and not inner["criterion_met"]:
+                unmet.append("内层网格判据未满足")
             iterations.append({"outer_iteration": k+1, "physical_time": time, "metric_version": metric_version,
                                "frozen_physical": old_mesh.tolist(), "frozen_metric": frozen_metric.tolist(),
                                "provisional_values": provisional.tolist(), "pde": pde,
                                "mesh_inner": inner, "relative_mesh_change": mesh_change,
-                               "relative_field_change": field_change, "outer_converged": consistent})
+                               "relative_field_change": field_change, "outer_converged": consistent,
+                               "outer_status": outer_status, "outer_residual": outer_residual, "outer_tol": 1.,
+                               "outer_unmet_reasons": unmet})
             previous_solution = old_mesh, provisional.copy()
             if consistent or not moving or static:
                 break
@@ -204,6 +224,13 @@ def run(*, n=8, steps=3, dt=.02, inner_cap=3., max_outer=6, moving=True,
                        "transfer_mass_change": transfer_mass_change,
                        "min_signed_area": float(signed_triangle_areas(nodes, cells).min()),
                        "physical_dt": 0. if static else dt})
+        states[-1].update(t_start=0. if static else step*dt, t_end=time,
+                          input_physical=base_nodes.tolist(), k_actual=len(iterations), k_max=max_outer,
+                          outer_residual=iterations[-1]["outer_residual"], outer_tol=1.,
+                          outer_status=iterations[-1]["outer_status"],
+                          overall_success=bool(static or not moving or iterations[-1]["outer_converged"]))
+        if on_step:
+            on_step(states[-1])
     return {"config": {"n": n, "steps": steps, "physical_dt": dt, "inner_pseudo_time_cap": inner_cap,
                         "max_outer": max_outer, "moving": moving, "static": static,
                         "perturbation": perturbation, "nu": data.nu, "constant_solution": data.constant},
