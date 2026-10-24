@@ -11,7 +11,8 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def main():
-    for relative in ("results", "results/mentor_2026-10-23/e_convergence", "results/mentor_2026-10-23/p1_v2/e"):
+    for relative in ("results", "results/mentor_2026-10-23/e_convergence", "results/mentor_2026-10-23/p1_v2/e",
+                     "results/mentor_2026-10-23/p1_complete"):
         folder = ROOT / relative
         data = json.loads((folder / "e_variational_mesh.json").read_text(encoding="utf-8"))
         write_viewer(data, folder)

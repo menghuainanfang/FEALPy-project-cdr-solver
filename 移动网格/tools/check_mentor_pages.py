@@ -16,7 +16,8 @@ PAGES = ["index.html", "demos/index.html", "results/e_variational_mesh.html",
          "results/mentor_2026-10-23/static/h_burgers.html",
          "results/mentor_2026-10-23/p1_v2/e/e_variational_mesh.html",
          "results/mentor_2026-10-23/p1_v2/h_preview/h_burgers.html",
-         "results/mentor_2026-10-23/p1_v2/static/h_burgers.html"]
+         "results/mentor_2026-10-23/p1_v2/static/h_burgers.html",
+         "results/mentor_2026-10-23/p1_complete/e_variational_mesh.html"]
 
 
 class Page(HTMLParser):

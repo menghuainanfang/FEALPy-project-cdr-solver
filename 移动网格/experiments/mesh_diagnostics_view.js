@@ -54,6 +54,12 @@
       first(r=>r.criterion_met===true), last];
   }
 
+  function guideLabels(model) {
+    return ["1 初始残量", "2 演化过程",
+      model.trace.some(r=>r.conditions_met===true)?"3 首次单次全条件":"3 单次全条件：未达到",
+      model.trace.some(r=>r.criterion_met===true)?"4 首次连续达标":"4 连续达标：未达到", "5 最终停止"];
+  }
+
   function mount(root, {onSelectAccepted=()=>{}}={}) {
     if (!document.getElementById("mesh-diag-style")) {
       const css=document.createElement("style"); css.id="mesh-diag-style";
@@ -62,6 +68,10 @@
     }
     root.classList.add("mesh-diag");
     root.innerHTML=`<h2>这个网格算收敛了吗？</h2><p class="position"></p><div class="checks"></div><p class="outcome"></p><div class="charts"><section><h3>r_RMS 对网格伪时间 s</h3><canvas data-chart="residual" role="img" aria-label="网格残量与阈值曲线，可点击定位"></canvas></section><section><h3>冻结度量能量 I_h 对 s</h3><canvas data-chart="energy" role="img" aria-label="单个冻结epoch的能量曲线，可点击定位"></canvas></section><section><h3>Δs_BDF 对接受步 j</h3><canvas data-chart="step" role="img" aria-label="BDF真实接受步长曲线，可点击定位"></canvas></section></div><p class="subtle">蓝线为当前轨迹；残量图虚线为阈值，竖线为首次完整收敛检查。点击曲线可选择实际接受状态。每张能量曲线仅属于当前冻结epoch。</p><h3>数字是什么意思？</h3><table><thead><tr><th>字段</th><th>当前检查 / 本次总计</th></tr></thead><tbody></tbody></table><p class="subtle">帧数、接受步数与RHS次数没有固定大小顺序。网格伪时间不是墙钟秒；网格收敛与积分器成功、PDE状态分别判断。</p><h3>3分钟看懂收敛</h3><div class="guide"></div><p class="guide-text"></p><p class="subtle">满足这些网格平衡判据不证明局部或全局能量极小值。</p>`;
+    const content=document.createElement('div');
+    while(root.children.length>2)content.append(root.children[2]);
+    root.append(content);
+    const archive=document.createElement('p'); archive.className='outcome'; archive.hidden=true;root.append(archive);
     const find=s=>root.querySelector(s);
     let model=null, position=null, selected=0;
     function help(key) {
@@ -101,13 +111,19 @@
     }
     function render() {
       const r=model.trace[selected];
+      content.hidden=!model.modern; archive.hidden=model.modern;
+      if(!model.modern){
+        find('.position').textContent='历史基线 · 此记录只保存了展示帧或部分接受步，未记录完整收敛监控。';
+        archive.replaceChildren(document.createTextNode(`本次最终记录：${model.scene.stop_reason}；保存帧 ${model.savedFrames}；RHS总调用 ${count(model.scene.solver_stats?.nfev)}。当前时刻的完整收敛判据无法从该记录恢复。 `));
+        const a=document.createElement('a');a.href=document.querySelector('a[href]')?.href||'#';a.textContent='打开实验导航，选择完整诊断案例 →';archive.append(a);return;
+      }
       const physical=position.physical_time==null?"":`物理时间 t=${position.physical_time.toFixed(3)}；`;
       find(".position").textContent=`${physical}可视化网格伪时间 s=${position.pseudo_time.toFixed(6)}；判据检查取实际接受状态 s=${r.mesh_pseudo_time.toFixed(6)}；epoch=${r.epoch_id}。`;
       const geom=r.geometry_valid==null?"未提供":r.geometry_valid?"是":"否";
       find(".checks").replaceChildren(
         check("主判据 · 网格残量",`${number(r.mesh_residual_rms)} / ${number(r.residual_threshold)}`,"", "mesh_residual_rms"),
-        check("辅助 · 窗口相对位移",`${number(r.displacement)} / ${number(r.displacement_threshold)}`,`max |Δxi|/h_ref；固定窗口Δs=${number(r.window_pseudo_time)}，窗口就绪=${r.window_ready===true?"是":"否"}。`),
-        check("辅助 · 冻结能量变化率",`${number(r.energy_change_rate)} / ${number(r.energy_rate_threshold)}`,`|ΔI|/max(|I_window|,I_scale)/(window/tau)；本次参考能量规模=${number(r.energy_reference)}。`),
+        check("辅助 · 窗口相对位移",r.window_ready?`${number(r.displacement)} / ${number(r.displacement_threshold)}`:`等待固定窗口；阈值 ${number(r.displacement_threshold)}`,`max |Δxi|/h_ref；固定窗口Δs=${number(r.window_pseudo_time)}，窗口就绪=${r.window_ready===true?"是":"否"}。`),
+        check("辅助 · 冻结能量变化率",r.window_ready?`${number(r.energy_change_rate)} / ${number(r.energy_rate_threshold)}`:`等待固定窗口；阈值 ${number(r.energy_rate_threshold)}`,`|ΔI|/max(|I_window|,I_scale)/(window/tau)；${r.window_ready?'本次参考能量规模='+number(r.energy_reference):'固定窗口尚未就绪'}。`),
         check("硬约束 · 几何合法",geom,"检查两个网格的最小正有向面积、边界法向与角点；固定边界另检查切向位移。"),
         check("连续达标次数",`${r.consecutive_success??"未提供"} / ${r.required_successes??"未提供"}`,"仅在实际接受步检查；所有单次条件满足才累加，否则归零。"),
         check("当前接受检查",r.criterion_met===true?"网格判据已满足":r.criterion_met===false?"尚未满足网格判据":"旧记录：逐步判据未提供","数值成功不等于网格收敛；最终停止与当前检查分别显示。")
@@ -115,15 +131,15 @@
       const terminal=model.trace.at(-1), scene=model.scene;
       find(".outcome").textContent=`当前判据说明：${r.unmet_reasons?.length?r.unmet_reasons.join("；"):"无未达条件，当前完整判据已满足"}\n${model.modern?"本次最终停止":"历史输出的最终停止"}：${scene.stop_reason}；积分器=${scene.solver_status??"历史记录未分层"}；网格=${scene.mesh_status??"历史记录未分层"}；criterion_met=${scene.criterion_met??"未提供"}；cap_reached=${scene.cap_reached??"未提供"}。\n首次完整收敛检查 s=${terminal.first_converged_s==null?(model.modern?"本次未达到":"旧记录未提供"):terminal.first_converged_s.toFixed(6)}。`;
       const body=find("tbody");body.replaceChildren();
-      for(const [key,value] of counterRows(model,r,position.display_frame_index)){const tr=document.createElement("tr"),name=document.createElement("th"),v=document.createElement("td");name.textContent=definitions[key].label;name.append(help(key));v.textContent=value;tr.append(name,v);body.append(tr);}
+      for(const [key,value] of counterRows(model,r,position.display_frame_index)){if(key==='rejected_bdf_attempts')continue;const tr=document.createElement("tr"),name=document.createElement("th"),v=document.createElement("td");name.textContent=definitions[key].label;name.append(help(key));v.textContent=value;tr.append(name,v);body.append(tr);}
+      [...find('.guide').children].forEach((b,i)=>b.textContent=guideLabels(model)[i]);
       for(const canvas of root.querySelectorAll("canvas"))plot(canvas,canvas.dataset.chart);
     }
     function select(i) {const target=model.trace[i]; onSelectAccepted(i,target);selected=i;render();}
-    const stages=["1 初始残量","2 逐步下降","3 首次单次全条件","4 连续达标","5 最终停止"];
-    stages.forEach((label,i)=>{const b=document.createElement("button");b.type="button";b.textContent=label;b.onclick=()=>{const index=guideIndices(model)[i];select(index);const r=model.trace[index];find(".guide-text").textContent=`${label}：实际接受状态 s=${r.mesh_pseudo_time.toFixed(6)}，残量=${number(r.mesh_residual_rms)}；${r.criterion_met===true?"已达到本例完整判据":r.unmet_reasons.join("；")}。`;};find(".guide").append(b);});
-    return {update(scene,context){model=normalizeScene(scene);position=context;selected=acceptedAtOrBefore(model.trace,context.pseudo_time);render();}};
+    for(let i=0;i<5;i++){const b=document.createElement("button");b.type="button";b.onclick=()=>{const index=guideIndices(model)[i];select(index);const r=model.trace[index];find(".guide-text").textContent=`${guideLabels(model)[i]}：实际接受状态 s=${r.mesh_pseudo_time.toFixed(6)}，残量=${number(r.mesh_residual_rms)}；${r.criterion_met===true?"已达到本例完整判据":r.unmet_reasons.join("；")}。`;};find(".guide").append(b);}
+    return {update(scene,context){model=normalizeScene(scene);position=context;selected=acceptedAtOrBefore(model.trace,context.pseudo_time);find('.guide-text').textContent='选择一个阶段，网格、时间轴与诊断将同步定位。';render();}};
   }
-  const api={normalizeScene,acceptedAtOrBefore,counterRows,guideIndices,mount};
+  const api={normalizeScene,acceptedAtOrBefore,counterRows,guideIndices,guideLabels,mount};
   if(typeof module!=="undefined"&&module.exports)module.exports=api;
   else globalThis.MeshDiagnostics=api;
 })();

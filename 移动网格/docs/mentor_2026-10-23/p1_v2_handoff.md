@@ -4,6 +4,7 @@
 
 ## 结果入口（本机数值已验证）
 
+- [完整收敛案例库](../../results/mentor_2026-10-23/p1_complete/e_variational_mesh.html)：10个实际计算案例，长时间上限20；逐接受状态同步回放，见[案例说明](complete_demo.md)。
 - [E共用判据面板](../../results/mentor_2026-10-23/p1_v2/e/e_variational_mesh.html)：提前达标、恰在上限达标、到上限未达标三种真实场景。
 - [H共用面板验证](../../results/mentor_2026-10-23/p1_v2/h_preview/h_burgers.html)：现有Burgers求解器的两个物理步，物理时间/耦合轮次/网格接受步分别显示。
 - [静态输入](../../results/mentor_2026-10-23/p1_v2/static/h_burgers.html)：物理步n=0，仅优化网格；PDE误差为null。

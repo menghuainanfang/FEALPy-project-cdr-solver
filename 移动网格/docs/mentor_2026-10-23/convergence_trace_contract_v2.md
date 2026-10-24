@@ -74,9 +74,11 @@ P2每个物理步的n从1计数，初始n=0；k从1计数；内层j=0为初始�
 P2以物理时间、物理步和metric版本组织epoch，示例ID为 `physical_step_1_outer_1_metric_1`。同一个物理时步的不同k对应不同冻结epoch。
 UI将当前诊断的接受时刻与当前可视化采样时刻同时列出；点击诊断图或讲解步骤选择的是实际接受检查，网格画面定位到最近保存采样。
 
+完整案例库采用可选的`replay_mode=accepted_states`：`frames[j]`保存实际接受状态j的两张网格和显示指标，与`convergence_trace[j]`时刻完全相同。帧数为接受步数加1，包含初态；`sample_dt`在此模式下等于接受步长。`sampled_output_history`保留独立输出采样的诊断；`accepted_step_trace`保留接受步诊断，网格坐标只存于`frames`，避免重复。此模式不改变求解器、判据或原始采样模式的数据契约。
+
 ## 历史JSON
 
-现有E/H原始JSON保留。没有convergence_trace的旧JSON通过共享面板的 `normalizeScene` 读取原有帧与接受步计数，但不补算连续计数、geometry_valid、criterion_met或首次达标时刻。
+现有E/H原始JSON保留。没有convergence_trace的旧JSON通过共享面板的 `normalizeScene` 读取原有帧与接受步计数，但不补算连续计数、geometry_valid、criterion_met或首次达标时刻。历史页面显示一段数据范围说明与导航入口，完整诊断卡片、图表和分阶段讲解仅对包含监控轨迹的记录展示。
 原版E的gradient_norm只作为速度显示，不转换成r_RMS；没有真实接受步统计时显示“未提供”。旧记录的最终stop_reason与当前检查是否达标分栏。
 `python -m tools.render_mesh_viewers` 只更新已有HTML解释层，不改数值JSON。旧版页面与源码可在ba0d1aa及此前归档恢复。
 

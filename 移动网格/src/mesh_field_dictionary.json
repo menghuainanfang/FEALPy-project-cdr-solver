@@ -62,7 +62,7 @@
       "symbol": "",
       "label": "可播放保存帧数",
       "unit": "帧",
-      "definition": "frames数组的输出采样帧数；BDF接受状态轨迹另存，不混作同一帧索引。改变采样密度不改变底层方程和网格停止规则。",
+      "definition": "frames数组的可播放帧数。默认是独立输出采样；replay_mode=accepted_states时，每帧对应同编号BDF接受状态，包含j=0初态，因此帧数=接受步数+1。改变展示采样密度不改变底层方程和停止规则。",
       "aliases": []
     },
     {
