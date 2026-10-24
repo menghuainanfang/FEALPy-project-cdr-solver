@@ -1,0 +1,153 @@
+{
+  "source_snapshot_commit": "ba0d1aa",
+  "python": "D:\\桌面\\movingmesh\\移动网格\\.venv\\Scripts\\python.exe",
+  "python_version": "3.13.2 (tags/v3.13.2:4f8bb39, Feb  4 2025, 15:23:48) [MSC v.1942 64 bit (AMD64)]",
+  "numpy": "2.5.3",
+  "scipy": "1.18.1",
+  "project": {
+    "sha": "ba0d1aa0f7834fcaf802d36d44dc6c48ed656e46",
+    "dirty": true
+  },
+  "fealpy_import": "C:\\Users\\10251\\fealpy\\fealpy\\__init__.py",
+  "fealpy": {
+    "sha": "69faa5f41e3c12633ed714520c3ec512eb1a784b",
+    "dirty": true
+  },
+  "records": [
+    {
+      "case": "E_smoothing",
+      "source_file": "e_convergence/e_variational_mesh.json",
+      "json_path": "scenes.smoothing",
+      "archived_git": {
+        "sha": "669992e9be57608a02b6551f617d50343d28b0d8",
+        "dirty": true
+      },
+      "display_frame_count": 61,
+      "bdf_accepted_steps": 109,
+      "nfev": 267,
+      "pseudo_time_cap": 5.0,
+      "final_s": 5.0,
+      "stop_reason": "converged",
+      "first_residual_met_s": 0.8080345499284851,
+      "first_all_conditions_met_s": 4.185148679776312,
+      "first_converged_s": 5.0,
+      "consecutive_success_at_stop": 3,
+      "cap_reached": true,
+      "residual_final": 1.2512104493147925e-07,
+      "residual_threshold": 0.00032050067086063217,
+      "accepted_dt_min": 1.5356357660824738e-06,
+      "accepted_dt_max": 0.47550117654712043,
+      "accepted_dt_median": 0.003551627297852661,
+      "endpoint_max_difference": 0.0,
+      "archived_counts_match": true
+    },
+    {
+      "case": "E_adaptive_fixed",
+      "source_file": "e_convergence/e_variational_mesh.json",
+      "json_path": "scenes.adaptive_fixed",
+      "archived_git": {
+        "sha": "669992e9be57608a02b6551f617d50343d28b0d8",
+        "dirty": true
+      },
+      "display_frame_count": 61,
+      "bdf_accepted_steps": 103,
+      "nfev": 233,
+      "pseudo_time_cap": 5.0,
+      "final_s": 5.0,
+      "stop_reason": "pseudo_time_cap",
+      "first_residual_met_s": 3.326780466720584,
+      "first_all_conditions_met_s": 5.0,
+      "first_converged_s": null,
+      "consecutive_success_at_stop": 1,
+      "cap_reached": true,
+      "residual_final": 6.498827221282791e-07,
+      "residual_threshold": 5.668455669700281e-05,
+      "accepted_dt_min": 1.3566172055298828e-05,
+      "accepted_dt_max": 0.258211380853548,
+      "accepted_dt_median": 0.0189070511230649,
+      "endpoint_max_difference": 0.0,
+      "archived_counts_match": true
+    },
+    {
+      "case": "E_adaptive",
+      "source_file": "e_convergence/e_variational_mesh.json",
+      "json_path": "scenes.adaptive",
+      "archived_git": {
+        "sha": "669992e9be57608a02b6551f617d50343d28b0d8",
+        "dirty": true
+      },
+      "display_frame_count": 61,
+      "bdf_accepted_steps": 104,
+      "nfev": 247,
+      "pseudo_time_cap": 5.0,
+      "final_s": 5.0,
+      "stop_reason": "pseudo_time_cap",
+      "first_residual_met_s": null,
+      "first_all_conditions_met_s": null,
+      "first_converged_s": null,
+      "consecutive_success_at_stop": 0,
+      "cap_reached": true,
+      "residual_final": 0.0005131136449601857,
+      "residual_threshold": 5.560723880682362e-05,
+      "accepted_dt_min": 1.2766328637145396e-05,
+      "accepted_dt_max": 0.23451814878808097,
+      "accepted_dt_median": 0.018954541913115852,
+      "endpoint_max_difference": 0.0,
+      "archived_counts_match": true
+    },
+    {
+      "case": "H_t1_k1",
+      "source_file": "burgers/h_burgers.json",
+      "json_path": "states[1].outer_iterations[0].mesh_inner",
+      "archived_git": {
+        "sha": "fcbd9453f4d46613be622dbbdc706f225c80b6cb",
+        "dirty": true
+      },
+      "display_frame_count": 8,
+      "bdf_accepted_steps": 111,
+      "nfev": 280,
+      "pseudo_time_cap": 3.0,
+      "final_s": 3.0,
+      "stop_reason": "converged",
+      "first_residual_met_s": 1.073065856248899,
+      "first_all_conditions_met_s": 2.586990444962786,
+      "first_converged_s": 3.0,
+      "consecutive_success_at_stop": 3,
+      "cap_reached": true,
+      "residual_final": 5.659395934988981e-07,
+      "residual_threshold": 0.0001970399194168422,
+      "accepted_dt_min": 2.055867217383493e-06,
+      "accepted_dt_max": 0.2999999999999998,
+      "accepted_dt_median": 0.003464256740283743,
+      "endpoint_max_difference": 0.0,
+      "archived_counts_match": true
+    },
+    {
+      "case": "H_t2_k1",
+      "source_file": "burgers/h_burgers.json",
+      "json_path": "states[2].outer_iterations[0].mesh_inner",
+      "archived_git": {
+        "sha": "fcbd9453f4d46613be622dbbdc706f225c80b6cb",
+        "dirty": true
+      },
+      "display_frame_count": 7,
+      "bdf_accepted_steps": 57,
+      "nfev": 116,
+      "pseudo_time_cap": 3.0,
+      "final_s": 2.5114701235583805,
+      "stop_reason": "converged",
+      "first_residual_met_s": 1.7164772459616646,
+      "first_all_conditions_met_s": 2.1139736847600226,
+      "first_converged_s": 2.5114701235583805,
+      "consecutive_success_at_stop": 3,
+      "cap_reached": false,
+      "residual_final": 1.7224806515625293e-07,
+      "residual_threshold": 3.5341317287621938e-06,
+      "accepted_dt_min": 3.067386146108702e-05,
+      "accepted_dt_max": 0.19874821939917897,
+      "accepted_dt_median": 0.013000733022633604,
+      "endpoint_max_difference": 0.0,
+      "archived_counts_match": true
+    }
+  ]
+}
