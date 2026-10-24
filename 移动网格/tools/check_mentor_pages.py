@@ -17,7 +17,8 @@ PAGES = ["index.html", "demos/index.html", "results/e_variational_mesh.html",
          "results/mentor_2026-10-23/p1_v2/e/e_variational_mesh.html",
          "results/mentor_2026-10-23/p1_v2/h_preview/h_burgers.html",
          "results/mentor_2026-10-23/p1_v2/static/h_burgers.html",
-         "results/mentor_2026-10-23/p1_complete/e_variational_mesh.html"]
+         "results/mentor_2026-10-23/p1_complete/e_variational_mesh.html",
+         "results/mentor_2026-10-23/optimization_flow/index.html"]
 
 
 class Page(HTMLParser):
@@ -60,6 +61,8 @@ def main():
             raise AssertionError(f"Missing convergence panel: {relative}")
         if "__MESH_DIAGNOSTICS_JS__" in source or "__EXPERIMENT_DATA__" in source:
             raise AssertionError(f"Unresolved template token: {relative}")
+        if "__FLOW_SCRIPT__" in source or "__FLOW_DATA__" in source:
+            raise AssertionError(f"Unresolved flow template token: {relative}")
         referenced_ids = set(re.findall(r"\bel\(['\"]([^'\"]+)['\"]\)", source))
         if referenced_ids-page.ids:
             raise AssertionError(f"Missing UI element IDs: {relative}: {sorted(referenced_ids-page.ids)}")
@@ -79,7 +82,7 @@ def main():
                                encoding="utf-8", capture_output=True, check=True)
         rows.append({"page": relative, "local_links": local, "inline_scripts": len(page.scripts),
                      "status": "static_checks_passed"})
-    print(json.dumps({"pages": rows, "browser_interactions": "not_verified"}, ensure_ascii=False, indent=2))
+    print(json.dumps({"pages": rows, "browser_interactions": "not_checked_by_static_tool"}, ensure_ascii=False, indent=2))
 
 
 if __name__ == "__main__":

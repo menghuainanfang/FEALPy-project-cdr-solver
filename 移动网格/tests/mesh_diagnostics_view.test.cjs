@@ -96,8 +96,7 @@ test('complete library replays the exact accepted meshes and contains distinct r
 test('all current E and Poisson pages expose only tangential moving cases',()=>{
   for(const file of ['results/e_variational_mesh.html',
     'results/mentor_2026-10-23/e_convergence/e_variational_mesh.html',
-    'results/mentor_2026-10-23/p1_v2/e/e_variational_mesh.html',
-    'results/mentor_2026-10-23/p1_complete/e_variational_mesh.html']){
+    'results/mentor_2026-10-23/p1_v2/e/e_variational_mesh.html']){
     const html=fs.readFileSync(path.join(root,file),'utf8');
     const data=JSON.parse(html.match(/<script id="data" type="application\/json">([\s\S]*?)<\/script>/)[1]);
     assert.ok(Object.values(data.scenes).every(s=>s.boundary_mode==='tangent'));

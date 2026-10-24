@@ -15,7 +15,7 @@ def main():
     handler = partial(SimpleHTTPRequestHandler, directory=str(ROOT))
     with ThreadingHTTPServer(("127.0.0.1", args.port), handler) as server:
         print(f"Demo navigation: http://localhost:{args.port}/demos/index.html", flush=True)
-        print(f"Convergence library: http://localhost:{args.port}/results/mentor_2026-10-23/p1_complete/e_variational_mesh.html", flush=True)
+        print(f"Mesh optimization flow: http://localhost:{args.port}/results/mentor_2026-10-23/optimization_flow/index.html", flush=True)
         print("Press Ctrl+C to stop this preview.", flush=True)
         try:
             server.serve_forever()

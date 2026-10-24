@@ -17,7 +17,7 @@ from src.fealpy_mesh_evolution import solve, quality_metrics
 from src.mesh_trace import FIELD_DICTIONARY, SCHEMA_VERSION
 from src.variational_mesh import band_metric, interpolation_rmse
 
-OUTPUT = ROOT / "results/mentor_2026-10-23/p1_complete"
+OUTPUT = ROOT / "results/mentor_2026-10-23/p1_diagnostics_archive"
 
 
 def replay_frames(scene, reference, cells, metric_function, metric):
