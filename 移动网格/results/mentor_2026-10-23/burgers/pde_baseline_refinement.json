@@ -1,0 +1,56 @@
+{
+  "spatial": [
+    {
+      "n": 4,
+      "physical_dt": 0.02,
+      "time": 0.06,
+      "l2_error": 0.06044890895723899,
+      "nonlinear_residual": 1.6857612897921898e-10,
+      "wall_seconds": 0.19352149998303503
+    },
+    {
+      "n": 8,
+      "physical_dt": 0.02,
+      "time": 0.06,
+      "l2_error": 0.015897671216107703,
+      "nonlinear_residual": 3.42321178844559e-10,
+      "wall_seconds": 0.2589328999747522
+    },
+    {
+      "n": 16,
+      "physical_dt": 0.02,
+      "time": 0.06,
+      "l2_error": 0.004175921477821568,
+      "nonlinear_residual": 4.0889224947396195e-10,
+      "wall_seconds": 0.3285318000125699
+    }
+  ],
+  "temporal": [
+    {
+      "n": 16,
+      "steps": 3,
+      "physical_dt": 0.02,
+      "l2_error": 0.004175921477821568,
+      "wall_seconds": 0.3425688000279479
+    },
+    {
+      "n": 16,
+      "steps": 6,
+      "physical_dt": 0.01,
+      "l2_error": 0.004074748416290203,
+      "wall_seconds": 1.0297964999917895
+    },
+    {
+      "n": 16,
+      "steps": 12,
+      "physical_dt": 0.005,
+      "l2_error": 0.004029938234652959,
+      "wall_seconds": 2.5033276000176556
+    }
+  ],
+  "temporal_nodal_self_differences": [
+    0.0049069450643508625,
+    0.0025159195895695006
+  ],
+  "self_difference_ratio": 1.950358463241065
+}

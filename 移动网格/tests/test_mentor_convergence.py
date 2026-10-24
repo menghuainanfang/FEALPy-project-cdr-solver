@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from src.fealpy_mesh_evolution import Convergence, solve, solve_ivp_baseline
+from src.fealpy_mesh_evolution import Convergence, FealpyMeshEvolution, solve, solve_ivp_baseline
 from src.variational_mesh import band_metric
 from tests.test_fealpy_mesh_evolution import mesh_data
 
@@ -60,3 +60,19 @@ def test_scaled_residual_does_not_depend_on_tau():
     np.testing.assert_allclose(a["history"][0]["scaled_residual_rms"], z["history"][0]["scaled_residual_rms"], rtol=1e-12)
     np.testing.assert_allclose(a["history"][0]["projected_gradient_norm"], z["history"][0]["projected_gradient_norm"], rtol=1e-12)
     np.testing.assert_allclose(a["history"][0]["velocity_norm"], 10*z["history"][0]["velocity_norm"], rtol=1e-12)
+
+
+@pytest.mark.parametrize("mode", ["fixed", "tangent"])
+def test_reported_gradient_matches_projected_energy_derivative(mode):
+    x, c, b, m = problem()
+    model = FealpyMeshEvolution(x, c, m, boundary_mode=mode)
+    A, g, trA, edges = model.quantities(x)
+    local = model.Idxi_from_Ehat(A, g, trA, edges, model.rho(model.metric), model.metric_theta)
+    gradient = np.asarray(model.geo_core.assemble_vector(local))
+    on_x = np.isclose(x[:, 0], 0.) | np.isclose(x[:, 0], 1.)
+    on_y = np.isclose(x[:, 1], 0.) | np.isclose(x[:, 1], 1.)
+    gradient[on_x, 0], gradient[on_y, 1] = 0., 0.
+    if mode == "fixed":
+        gradient[b] = 0.
+    result = solve(x, x, c, b, m, duration=.001, frames=2, boundary_mode=mode)
+    np.testing.assert_allclose(result["history"][0]["projected_gradient_norm"], np.linalg.norm(gradient), rtol=1e-12)

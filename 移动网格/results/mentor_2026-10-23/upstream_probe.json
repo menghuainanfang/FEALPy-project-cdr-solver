@@ -1,0 +1,13 @@
+{
+  "source": "C:\\Users\\10251\\fealpy\\example\\meshopt\\mmesh\\scalar_burgers_mm_solver.py",
+  "fealpy": {
+    "sha": "69faa5f41e3c12633ed714520c3ec512eb1a784b",
+    "dirty": true
+  },
+  "phases": [
+    "module import succeeded"
+  ],
+  "status": "initialization_failed",
+  "exception": "AttributeError(\"'Mesh' object has no attribute 'meshdata'\")",
+  "traceback": "Traceback (most recent call last):\n  File \"D:\\\u684c\u9762\\movingmesh\\\u79fb\u52a8\u7f51\u683c\\tools\\probe_fealpy_burgers.py\", line 24, in main\n    pde.set_mesh(nx=4, ny=4)\n    ~~~~~~~~~~~~^^^^^^^^^^^^\n  File \"C:\\Users\\10251\\fealpy\\fealpy\\mmesh\\pde\\scalar_burgers_data.py\", line 60, in set_mesh\n    self.mesh.meshdata['vertices'] = vertices\n    ^^^^^^^^^^^^^^^^^^\nAttributeError: 'Mesh' object has no attribute 'meshdata'\n"
+}

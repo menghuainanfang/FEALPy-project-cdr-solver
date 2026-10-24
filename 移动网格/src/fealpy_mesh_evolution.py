@@ -271,7 +271,8 @@ def solve(reference, physical, cells, boundary, metric, *, duration=.5, frames=6
     if save_inner_meshes:
         traces[0].update(computational=q0.tolist(), physical=moved0.tolist())
     sampling_times = np.linspace(0., duration, frames)
-    cursor, successes, reason, message = 1, 0, "pseudo_time_cap", ""
+    cursor, successes, accepted_steps, reason, message = 1, 0, 0, "pseudo_time_cap", ""
+    invalid_accepted_states, invalid_output_samples = 0, 0
     solver = BDF(rhs, 0., reference.ravel(order="F"), duration, max_step=duration/10,
                  jac_sparsity=sparsity, rtol=rtol, atol=atol)
     previous_q, previous_row = q0, first
@@ -281,10 +282,12 @@ def solve(reference, physical, cells, boundary, metric, *, duration=.5, frames=6
         if solver.status == "failed":
             reason = "solver_failure"
             break
+        accepted_steps += 1
         try:
             row, q, moved = state(solver.t, solver.y.reshape(2, size).T)
         except ValueError as error:
             reason, message = "invalid_mesh", str(error)
+            invalid_accepted_states += 1
             break
         dt = float(solver.step_size)
         displacement = float(np.max(np.linalg.norm((q-previous_q)/local_h[:, None], axis=1)))
@@ -326,6 +329,7 @@ def solve(reference, physical, cells, boundary, metric, *, duration=.5, frames=6
             row, sampled_q, moved = state(t, sampled_q)
         except ValueError as error:
             reason, message = "invalid_mesh", str(error)
+            invalid_output_samples += 1
             break
         actual_metric = metric_function(moved[cells].mean(axis=1)) if metric_function else metric
         row.update(output_frame_index=i, sample_dt=t-samples[i-1][0] if i else 0.,
@@ -338,7 +342,9 @@ def solve(reference, physical, cells, boundary, metric, *, duration=.5, frames=6
             "terminal_pseudo_time": float(solver.t), "last_valid_pseudo_time": last_valid_t,
             "boundary_mode": boundary_mode, "integrator": "SciPy BDF.step",
             "algorithm": "FEALPy MetricTensorAdaptive", "tau": tau,
-            "solver_stats": {"accepted_bdf_steps": len(traces)-1, "nfev": solver.nfev,
+            "solver_stats": {"accepted_bdf_steps": accepted_steps, "valid_accepted_states": len(traces)-1,
+                             "invalid_accepted_states": invalid_accepted_states,
+                             "invalid_output_samples": invalid_output_samples, "nfev": solver.nfev,
                              "njev": solver.njev, "nlu": solver.nlu,
                              "rhs_calls_including_jacobian_fd": rhs_calls,
                              "rejected_error_test_steps": None},

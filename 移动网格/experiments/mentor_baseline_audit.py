@@ -1,6 +1,8 @@
 """Reproduce the original solve_ivp runs and expose BDF accepted steps."""
 
 import csv
+import argparse
+import importlib.util
 import json
 from pathlib import Path
 from time import perf_counter
@@ -40,12 +42,33 @@ def trace(reference, physical, cells, metric, mode):
 
 
 def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--rerun-baseline", action="store_true")
+    args = parser.parse_args()
     bm.set_backend("numpy")
+    spec = importlib.util.spec_from_file_location("archived_baseline", OUTPUT / "baseline_fealpy_mesh_evolution.py")
+    baseline = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(baseline)
     summary = []
     for n in (8, 16):
         old = json.loads((OUTPUT / f"baseline_n{n}/e_variational_mesh.json").read_text(encoding="utf-8"))
         reference, cells = np.array(old["reference"]), np.array(old["cells"])
         for name, scene in old["scenes"].items():
+            if args.rerun_baseline:
+                from src.variational_mesh import band_metric
+                from experiments.e_variational_mesh_visual import git_state
+                import sys
+                started = perf_counter()
+                rerun = baseline.solve(reference, np.array(scene["fixed_physical"]), cells,
+                                       np.array(old["boundary"]), np.array(scene["frozen_metric"]),
+                                       boundary_mode=scene["boundary_mode"],
+                                       metric_function=band_metric if name.startswith("adaptive") else None)
+                rerun.update(fixed_physical=scene["fixed_physical"], frozen_metric=scene["frozen_metric"])
+                (OUTPUT / f"baseline_n{n}/{name}_rerun.json").write_text(json.dumps({
+                    "scene": rerun, "wall_seconds": perf_counter()-started,
+                    "project": git_state(ROOT), "python": sys.executable,
+                    "source_snapshot": "baseline_fealpy_mesh_evolution.py"}), encoding="utf-8")
+                scene = rerun
             rows, last, elapsed = trace(reference, np.array(scene["fixed_physical"]),
                                         cells, np.array(scene["frozen_metric"]), scene["boundary_mode"])
             first, final = scene["frames"][0], scene["frames"][-1]
@@ -65,8 +88,9 @@ def main():
                     raise AssertionError(f"BDF trace differs from solve_ivp: {counter}")
             summary.append(row)
             (OUTPUT / f"baseline_n{n}/{name}_accepted_steps.json").write_text(json.dumps(rows, indent=2), encoding="utf-8")
-    (OUTPUT / "baseline_summary.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
-    with (OUTPUT / "baseline_summary.csv").open("w", newline="", encoding="utf-8-sig") as f:
+    suffix = "_rerun" if args.rerun_baseline else ""
+    (OUTPUT / f"baseline_summary{suffix}.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
+    with (OUTPUT / f"baseline_summary{suffix}.csv").open("w", newline="", encoding="utf-8-sig") as f:
         writer = csv.DictWriter(f, fieldnames=summary[0].keys())
         writer.writeheader()
         writer.writerows(summary)
