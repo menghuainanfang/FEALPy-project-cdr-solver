@@ -6,6 +6,7 @@ import argparse
 from datetime import datetime
 from importlib.metadata import version
 import json
+import os
 from pathlib import Path
 import subprocess
 import sys
@@ -46,6 +47,9 @@ def main():
     parser.add_argument("--duration", type=float, default=0.5)
     parser.add_argument("--frames", type=int, default=61)
     parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument("--rtol", type=float, default=1e-6)
+    parser.add_argument("--atol", type=float, default=1e-8)
+    parser.add_argument("--output-dir", type=Path, default=ROOT / "results")
     args = parser.parse_args()
     if args.nx < 2 or args.duration <= 0 or args.frames < 2:
         parser.error("nx >= 2, duration > 0 and frames >= 2 are required")
@@ -71,6 +75,7 @@ def main():
         metric_function = band_metric if name.startswith("adaptive") else None
         scenes[name] = solve(reference, physical, cells, boundary, metric,
                              duration=args.duration, frames=args.frames,
+                             rtol=args.rtol, atol=args.atol,
                              boundary_mode=mode, metric_function=metric_function)
         scenes[name]["fixed_physical"] = physical.tolist()
         scenes[name]["frozen_metric"] = metric.tolist()
@@ -82,17 +87,20 @@ def main():
                   "project": git_state(ROOT),
                   "fealpy": git_state(Path(fealpy.__file__).resolve().parents[1]),
                   "elapsed_seconds": elapsed, "backend": "numpy", "dtype": "float64"}
-    result = {"config": vars(args), "provenance": provenance,
+    config = {**vars(args), "output_dir": str(args.output_dir)}
+    result = {"config": config, "provenance": provenance,
               "reference": reference.tolist(), "cells": cells.tolist(),
               "edges": np.asarray(bm.to_numpy(mesh.entity("edge"))).tolist(),
               "boundary": boundary.tolist(), "scenes": scenes}
-    output = ROOT / "results"
-    output.mkdir(exist_ok=True)
+    output = args.output_dir
+    output.mkdir(parents=True, exist_ok=True)
     encoded = json.dumps(result, ensure_ascii=False, allow_nan=False)
     (output / "e_variational_mesh.json").write_text(encoded, encoding="utf-8")
     template = Path(__file__).with_name("mesh_viewer.html").read_text(encoding="utf-8")
     (output / "e_variational_mesh.html").write_text(
-        template.replace("__EXPERIMENT_DATA__", encoded), encoding="utf-8")
+        template.replace("__EXPERIMENT_DATA__", encoded)
+        .replace("../demos/index.html", Path(os.path.relpath(ROOT / "demos/index.html", output)).as_posix())
+        .replace("../index.html", Path(os.path.relpath(ROOT / "index.html", output)).as_posix()), encoding="utf-8")
     fig, axes = plt.subplots(3, 3, figsize=(13, 12), constrained_layout=True)
     for row, (name, scene) in enumerate(scenes.items()):
         first, last = scene["frames"][0], scene["frames"][-1]
