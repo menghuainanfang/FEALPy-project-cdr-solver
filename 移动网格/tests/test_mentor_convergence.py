@@ -49,7 +49,7 @@ def test_nonpositive_initial_mesh_fails_and_step_limit_is_explicit():
     with pytest.raises(ValueError, match="invalid_mesh"):
         solve(x, damaged, c, b, m)
     limited = solve(x, x, c, b, m, frames=3, max_internal_steps=1)
-    assert limited["stop_reason"] == "max_internal_steps"
+    assert limited["stop_reason"] == "max_accepted_steps"
     assert limited["solver_stats"]["accepted_bdf_steps"] == 1
 
 

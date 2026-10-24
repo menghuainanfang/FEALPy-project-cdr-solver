@@ -142,7 +142,7 @@ def run(*, n=8, steps=3, dt=.02, inner_cap=3., max_outer=6, moving=True,
     if signed_triangle_areas(nodes, cells).min() <= 0:
         raise ValueError("invalid_mesh: perturbed initial physical mesh")
     values = data.fields(nodes, 0.)[0]
-    states = [{"physical_time": 0., "nodes": nodes.tolist(), "values": values.tolist(),
+    states = [{"physical_time": 0., "physical_step_index": 0, "nodes": nodes.tolist(), "values": values.tolist(),
                "metric": numerical_metric(nodes, cells, values).tolist(), "outer_iterations": []}]
     metric_version = 0
     for step in range(1 if static else steps):
@@ -163,8 +163,10 @@ def run(*, n=8, steps=3, dt=.02, inner_cap=3., max_outer=6, moving=True,
             old_mesh = nodes.copy()
             if moving:
                 inner = move_mesh(reference, nodes, cells, boundary, frozen_metric,
-                                  duration=inner_cap, frames=8, save_inner_meshes=True)
-                if inner["stop_reason"] in ("invalid_mesh", "solver_failure", "max_internal_steps"):
+                                  duration=inner_cap, frames=8, save_inner_meshes=True,
+                                  epoch_id=f"physical_step_{step+1}_outer_{k+1}_metric_{metric_version}",
+                                  metric_provenance="I + 2*grad(U_h)*grad(U_h)^T/(1+|grad(U_h)|^2), numerical P1 cell gradient")
+                if inner["stop_reason"] in ("invalid_mesh", "solver_failure", "max_accepted_steps"):
                     raise RuntimeError(f"Mesh step failed: {inner['stop_reason']}: {inner['solver_message']}")
                 nodes = np.array(inner["frames"][-1]["physical"])
             else:
@@ -192,7 +194,7 @@ def run(*, n=8, steps=3, dt=.02, inner_cap=3., max_outer=6, moving=True,
             values, final_pde = solve_step(nodes, cells, transferred, time, dt, data)
             if final_pde["status"] != "converged":
                 raise RuntimeError("Final Burgers nonlinear solve did not converge")
-        states.append({"physical_time": time, "physical_step_index": step+1,
+        states.append({"physical_time": time, "physical_step_index": 0 if static else step+1,
                        "nodes": nodes.tolist(), "values": values.tolist(),
                        "metric": numerical_metric(nodes, cells, values).tolist(), "outer_iterations": iterations,
                        "pde": final_pde, "outer_converged": iterations[-1]["outer_converged"],

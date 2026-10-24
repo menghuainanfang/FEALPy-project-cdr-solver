@@ -1,0 +1,26 @@
+{
+  "version": "mesh-fields-v2.0",
+  "alias_scope": "iteration/step/gradient_norm仅指本项目归档的FEALPy E JSON；其他算法同名字段不按这些别名解释。静态输入不推进物理步n，outer_iteration表示一次冻结网格优化轮次。",
+  "index_policy": "物理时间步n与耦合轮次k从1计数；BDF初始状态j=0；保存帧索引从0计数，界面显示索引+1。",
+  "fields": [
+    {"key":"physical_time","symbol":"t","label":"物理时间","unit":"PDE模型时间单位","definition":"真实PDE演化时间；独立于网格伪时间与墙钟耗时。","aliases":["t"]},
+    {"key":"physical_step_index","symbol":"n","label":"物理时间步","unit":"步","definition":"第n次t_(n-1)到t_n的PDE推进，从1计数；初始状态为0，保存帧数另计。","aliases":[]},
+    {"key":"outer_iteration","symbol":"k","label":"物理解—网格耦合轮次","unit":"轮","definition":"同一个物理时间步内的PDE/度量/重分布交替，从1计数。","aliases":[]},
+    {"key":"mesh_pseudo_time","symbol":"s","label":"网格伪时间","unit":"规定网格演化单位，非SI秒","definition":"网格ODE的独立变量；不是物理时间或CPU耗时。","aliases":["pseudo_time"]},
+    {"key":"accepted_bdf_steps","symbol":"j","label":"BDF已接受内部步","unit":"步","definition":"成功BDF.step推进次数；初始状态j=0不算一步。与保存帧数无固定大小关系。","aliases":[]},
+    {"key":"rejected_bdf_attempts","symbol":"","label":"BDF拒绝尝试数","unit":"次或未提供","definition":"当前SciPy公开API未准确提供，JSON为null、界面显示未提供；不从nfev推断。","aliases":["rejected_error_test_steps"]},
+    {"key":"saved_frames","symbol":"","label":"可播放保存帧数","unit":"帧","definition":"frames数组的输出采样帧数；BDF接受状态轨迹另存，不混作同一帧索引。改变采样密度不改变底层方程和网格停止规则。","aliases":[]},
+    {"key":"display_frame_index","symbol":"","label":"当前可视化帧","unit":"0-based索引","definition":"数组索引从0开始；UI显示第index+1/总帧数，不称迭代次数。","aliases":["output_frame_index","iteration"]},
+    {"key":"nfev","symbol":"","label":"RHS调用数","unit":"次","definition":"SciPy BDF计数的RHS评估；不含其数值Jacobian差分中部分额外回调；实际含差分调用另列。","aliases":[]},
+    {"key":"njev","symbol":"","label":"Jacobian计算数","unit":"次","definition":"SciPy报告的Jacobian评估次数，不是接受步或RHS次数。","aliases":[]},
+    {"key":"nlu","symbol":"","label":"LU分解数","unit":"次","definition":"SciPy报告的线性系统LU分解次数，不是非线性迭代数。","aliases":[]},
+    {"key":"pseudo_step_size","symbol":"Δs","label":"BDF内部接受步长","unit":"网格伪时间单位","definition":"成功推进时s_j-s_(j-1)，由误差控制决定；初始状态为0。","aliases":["accepted_dt"]},
+    {"key":"output_sample_dt","symbol":"","label":"相邻展示帧间隔","unit":"网格伪时间单位","definition":"由可视化采样决定的两帧时间差；不用于判断BDF接受步长或收敛。","aliases":["sample_dt","step"]},
+    {"key":"wall_clock_seconds","symbol":"","label":"真实运行耗时","unit":"墙钟秒","definition":"perf_counter实测的数值驱动耗时；与物理时间和网格伪时间独立。","aliases":["wall_seconds"]},
+    {"key":"mesh_energy","symbol":"I_h","label":"冻结度量下网格能量","unit":"当前离散泛函归一化单位","definition":"I_h(xi;X_old,M_fixed)，每个epoch单独定义；不是PDE自由能，不能跨epoch无条件解释单调。","aliases":["energy"]},
+    {"key":"mesh_residual_rms","symbol":"r_RMS","label":"网格平衡残量RMS","unit":"无量纲","definition":"sqrt(sum_free((tau*v_i/h_i)^2)/N_free_scalar)，为投影且经节点平衡的速度残量；不是原始梯度。r_ref为该epoch初始值。","aliases":["scaled_residual_rms"]},
+    {"key":"velocity_norm","symbol":"||v||","label":"投影伪时间速度范数","unit":"计算坐标/网格伪时间","definition":"自由标量分量的欧氏范数，含tau与节点平衡缩放；不能单独据此称能量极小。","aliases":["gradient_norm"]},
+    {"key":"solver_status","symbol":"","label":"积分器状态","unit":"枚举","definition":"success只说明已接受的数值推进成功；不是网格收敛或PDE求解状态。","aliases":[]},
+    {"key":"mesh_status","symbol":"","label":"网格收敛状态","unit":"枚举","definition":"converged表示声明的网格残量/窗口/几何/连续判据满足；不证明局部或全局能量最小值。","aliases":[]}
+  ]
+}

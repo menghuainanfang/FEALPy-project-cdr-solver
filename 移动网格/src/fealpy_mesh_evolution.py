@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import numpy as np
-from dataclasses import asdict, dataclass
+from dataclasses import asdict
 from time import perf_counter, process_time
 from scipy.integrate import BDF, solve_ivp
 from scipy.sparse import coo_matrix
@@ -14,6 +14,8 @@ from fealpy.mmesh import MetricTensorAdaptive
 from fealpy.mmesh.metric_shared import GeometricDiscreteCore
 
 from src.geometry import signed_triangle_areas
+from src.mesh_convergence import AcceptedMeshState, Convergence, MeshConvergenceMonitor
+from src.mesh_trace import epoch_metadata
 from src.variational_mesh import reconstruct_physical, interpolation_rmse
 
 
@@ -166,29 +168,18 @@ def solve_ivp_baseline(reference, physical, cells, boundary, metric, *, duration
             "rmse_sampling": "100x100 midpoint interpolation samples, not PDE error"}
 
 
-@dataclass(frozen=True)
-class Convergence:
-    """Tolerances for a frozen problem; scaled pseudo-time is s/tau."""
-
-    residual_atol: float = 1e-6
-    residual_rtol: float = 1e-4
-    displacement_atol: float = 1e-5
-    energy_rate_atol: float = 1e-7
-    min_pseudo_time: float = .05
-    consecutive_steps: int = 3
-
-
 def solve(reference, physical, cells, boundary, metric, *, duration=.5, frames=61,
           boundary_mode="tangent", metric_function=None, rtol=1e-6, atol=1e-8,
           tau=.1, convergence=Convergence(), max_internal_steps=2000,
-          save_inner_meshes=False):
+          save_inner_meshes=False, epoch_id="frozen_mesh_0", stop_on_convergence=True,
+          metric_provenance="caller-supplied SPD cell tensors, frozen during this solve"):
     """Step BDF with geometry checks and independent replay sampling.
 
     R = tau*v/h is the dimensionless balanced, projected residual, using the
     minimum incident reference edge length h at each node. The raw projected
     energy derivative is -tau*v/P, where P is FEALPy's frozen balance diagonal.
-    A convergence declaration requires small R, displacement/h and relative
-    frozen-energy change per unit s/tau on consecutive accepted steps.
+    The independent monitor checks fixed-window displacement and frozen energy
+    change on accepted states. Replay sampling does not enter its state machine.
     """
     started, cpu_started = perf_counter(), process_time()
     reference, physical, cells = np.asarray(reference), np.asarray(physical), np.asarray(cells)
@@ -263,24 +254,43 @@ def solve(reference, physical, cells, boundary, metric, *, duration=.5, frames=6
         return row, q, moved
 
     first, q0, moved0 = state(0., reference)
-    threshold = None if convergence is None else (convergence.residual_atol +
-                                                 convergence.residual_rtol*first["scaled_residual_rms"])
+    monitor = MeshConvergenceMonitor(local_h, tau=tau, pseudo_time_cap=duration,
+                                     config=convergence, max_accepted_steps=max_internal_steps)
+
+    def diagnose(row, q, j, *, geometry_valid=True, geometry_message="", solver_success=True):
+        return monitor.check(AcceptedMeshState(row["pseudo_time"], q, row["energy"],
+                                              row["scaled_residual_rms"], geometry_valid,
+                                              geometry_message, epoch_id), j, solver_success=solver_success)
+
+    convergence_trace = [{**diagnose(first, q0, 0), "pseudo_step_size": 0.,
+                          "computational_min_area": first["computational_min_area"],
+                          "physical_min_area": first["physical_min_area"]}]
+    threshold = convergence_trace[0]["residual_threshold"]
     traces = [{**first, "accepted_step_index": 0, "accepted_dt": 0.,
                "relative_displacement": 0., "relative_energy_rate": 0.}]
     samples = [(0., q0)]
     if save_inner_meshes:
         traces[0].update(computational=q0.tolist(), physical=moved0.tolist())
     sampling_times = np.linspace(0., duration, frames)
-    cursor, successes, accepted_steps, reason, message = 1, 0, 0, "pseudo_time_cap", ""
+    cursor, accepted_steps, reason, message = 1, 0, "pseudo_time_cap", ""
     invalid_accepted_states, invalid_output_samples = 0, 0
     solver = BDF(rhs, 0., reference.ravel(order="F"), duration, max_step=duration/10,
                  jac_sparsity=sparsity, rtol=rtol, atol=atol)
+    convergence_trace[0].update(nfev=solver.nfev, njev=solver.njev, nlu=solver.nlu)
     previous_q, previous_row = q0, first
     last_valid_t = 0.
     for _ in range(max_internal_steps):
-        message = solver.step() or ""
+        try:
+            message = solver.step() or ""
+        except (ValueError, RuntimeError, np.linalg.LinAlgError) as error:
+            reason, message = "solver_failure", str(error)
+            convergence_trace.append(diagnose(previous_row, previous_q, accepted_steps, solver_success=False))
+            convergence_trace[-1]["solver_status"] = "failed"
+            break
         if solver.status == "failed":
             reason = "solver_failure"
+            convergence_trace.append(diagnose(previous_row, previous_q, accepted_steps, solver_success=False))
+            convergence_trace[-1]["solver_status"] = "failed"
             break
         accepted_steps += 1
         try:
@@ -288,36 +298,41 @@ def solve(reference, physical, cells, boundary, metric, *, duration=.5, frames=6
         except ValueError as error:
             reason, message = "invalid_mesh", str(error)
             invalid_accepted_states += 1
+            failed_row = {**previous_row, "pseudo_time": float(solver.t)}
+            convergence_trace.append(diagnose(failed_row, previous_q, accepted_steps,
+                                              geometry_valid=False, geometry_message=message))
+            convergence_trace[-1].update(mesh_energy=None, mesh_residual_rms=None,
+                                         candidate_values_available=False)
             break
         dt = float(solver.step_size)
         displacement = float(np.max(np.linalg.norm((q-previous_q)/local_h[:, None], axis=1)))
         energy_rate = tau*abs(row["energy"]-previous_row["energy"])/(dt*max(abs(first["energy"]), 1.))
         row.update(accepted_step_index=len(traces), accepted_dt=dt, t_old=float(solver.t_old),
+                   pseudo_step_size=dt,
                    relative_displacement=displacement, relative_energy_rate=energy_rate,
                    nfev=solver.nfev, njev=solver.njev, nlu=solver.nlu)
         if save_inner_meshes:
             row.update(computational=q.tolist(), physical=moved.tolist())
         traces.append(row)
+        diagnostic = diagnose(row, q, accepted_steps)
+        diagnostic.update(pseudo_step_size=dt, nfev=solver.nfev, njev=solver.njev, nlu=solver.nlu,
+                          computational_min_area=row["computational_min_area"], physical_min_area=row["physical_min_area"])
+        convergence_trace.append(diagnostic)
         last_valid_t = float(solver.t)
         dense = solver.dense_output()
         while cursor < len(sampling_times) and sampling_times[cursor] <= solver.t:
             t = float(sampling_times[cursor])
             samples.append((t, dense(t).reshape(2, size).T))
             cursor += 1
-        if convergence is not None:
-            small = (row["scaled_residual_rms"] <= threshold and
-                     displacement <= convergence.displacement_atol and
-                     energy_rate <= convergence.energy_rate_atol and
-                     solver.t >= convergence.min_pseudo_time)
-            successes = successes+1 if small else 0
-            if successes >= convergence.consecutive_steps:
-                reason = "converged"
+        if diagnostic["stop_reason"] is not None:
+            if diagnostic["stop_reason"] != "converged" or stop_on_convergence:
+                reason = diagnostic["stop_reason"]
                 break
         if solver.status == "finished":
             break
         previous_q, previous_row = q, row
     else:
-        reason = "max_internal_steps"
+        reason = "max_accepted_steps"
     if samples[-1][0] < last_valid_t:
         samples.append((last_valid_t, q))
     samples_1d = (np.arange(100)+.5)/100
@@ -333,24 +348,40 @@ def solve(reference, physical, cells, boundary, metric, *, duration=.5, frames=6
             break
         actual_metric = metric_function(moved[cells].mean(axis=1)) if metric_function else metric
         row.update(output_frame_index=i, sample_dt=t-samples[i-1][0] if i else 0.,
+                   display_frame_index=i, output_sample_dt=t-samples[i-1][0] if i else 0.,
                    **quality_metrics(moved, reference, cells, actual_metric))
         history.append(row)
         saved.append({**row, "computational": sampled_q.tolist(), "physical": moved.tolist(),
                       "interpolation_rmse": interpolation_rmse(moved, cells, points)})
-    return {"history": history, "frames": saved, "accepted_step_trace": traces,
+    terminal = convergence_trace[-1]
+    if not stop_on_convergence and reason not in ("invalid_mesh", "solver_failure", "max_accepted_steps"):
+        reason = "pseudo_time_cap" if terminal["cap_reached"] else reason
+    if invalid_output_samples:
+        terminal.update(mesh_status="invalid_mesh", geometry_valid=False, criterion_met=False,
+                        stop_reason="invalid_mesh", unmet_reasons=[message])
+    terminal["stop_reason"] = reason
+    wall_seconds = perf_counter()-started
+    return {**epoch_metadata(monitor, convergence_trace, free_scalar_dofs=int(free.sum()), tau=tau,
+                            local_h=local_h, frames=saved, wall_seconds=wall_seconds),
+            "history": history, "frames": saved, "accepted_step_trace": traces,
             "stop_reason": reason, "solver_message": message,
             "terminal_pseudo_time": float(solver.t), "last_valid_pseudo_time": last_valid_t,
             "boundary_mode": boundary_mode, "integrator": "SciPy BDF.step",
+            "pseudo_time_cap": duration, "metric_provenance": metric_provenance,
+            "solver_config": {"rtol": rtol, "atol": atol, "max_step": duration/10,
+                              "max_accepted_steps": max_internal_steps, "jacobian": "sparse finite difference"},
             "algorithm": "FEALPy MetricTensorAdaptive", "tau": tau,
             "solver_stats": {"accepted_bdf_steps": accepted_steps, "valid_accepted_states": len(traces)-1,
                              "invalid_accepted_states": invalid_accepted_states,
                              "invalid_output_samples": invalid_output_samples, "nfev": solver.nfev,
                              "njev": solver.njev, "nlu": solver.nlu,
                              "rhs_calls_including_jacobian_fd": rhs_calls,
+                             "rejected_bdf_attempts": None,
                              "rejected_error_test_steps": None},
             "convergence": None if convergence is None else asdict(convergence),
             "residual_threshold": threshold, "free_scalar_dofs": int(free.sum()),
             "velocity_definition": "Projected FEALPy v = -P*projected(dI/dxi)/tau; Euclidean norm on free scalar dofs",
             "residual_definition": "R_rms = rms(tau*v_i/h_i) on free scalar dofs; h_i=min incident reference edge length",
-            "wall_seconds": perf_counter()-started, "cpu_seconds": process_time()-cpu_started,
+            "wall_seconds": wall_seconds, "cpu_seconds": process_time()-cpu_started,
+            "stop_on_convergence": stop_on_convergence,
             "rmse_sampling": "100x100 midpoint interpolation samples, not PDE error"}
